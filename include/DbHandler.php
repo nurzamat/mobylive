@@ -285,6 +285,14 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
         return $result;
     }
 
+    public function getImagesByPost($post_id) {
+
+        $query = "SELECT * FROM images WHERE idPost='$post_id'";
+        $result = $this->queryMysql($query);
+
+        return $result;
+    }
+
     public function getCategories() {
         $query = "SELECT * FROM category";
         $result = $this->queryMysql($query);

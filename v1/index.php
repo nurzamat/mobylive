@@ -195,8 +195,11 @@ $app->get('/posts/category/:id/:page', function($category_id, $page) {
     // looping through result and preparing posts array
     if (mysql_num_rows($result) > 0)
     {
-        while ($post = mysql_fetch_object($result)) {
+        while ($post = mysql_fetch_object($result))
+        {
             $tmp = array();
+            $images_result = $db->getImagesByPost($post->id);
+
             $tmp["id"] = $post->id;
             $tmp["title"] = $post->title;
             $tmp["content"] = $post->content;
@@ -211,6 +214,8 @@ $app->get('/posts/category/:id/:page', function($category_id, $page) {
             $tmp["user_name"] = $post->name;
             $tmp["user_phone"] = $post->phone;
             $tmp["user_status"] = $post->user_status;
+            $tmp["images"] = $images_result;
+
             array_push($response["posts"], $tmp);
         }
     }
