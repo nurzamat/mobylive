@@ -77,38 +77,7 @@ class DbHandler {
     }
 
     public function checkLoginByPhone($phone, $password) {
-        // fetching user by email
-        $stmt = $this->conn->prepare("SELECT password_hash FROM users WHERE phone = ?");
-
-        $stmt->bind_param("s", $phone);
-
-        $stmt->execute();
-
-        $stmt->bind_result($password_hash);
-
-        $stmt->store_result();
-
-        if ($stmt->num_rows > 0) {
-            // Found user with the email
-            // Now verify the password
-
-            $stmt->fetch();
-
-            $stmt->close();
-
-            if (PassHash::check_password($password_hash, $password)) {
-                // User password is correct
-                return TRUE;
-            } else {
-                // user password is incorrect
-                return FALSE;
-            }
-        } else {
-            $stmt->close();
-
-            // user not existed with the email
-            return FALSE;
-        }
+        //todo
     }
 
     /**
@@ -162,24 +131,8 @@ class DbHandler {
     }
 
     public function getUserByPhone($phone) {
-        $stmt = $this->conn->prepare("SELECT name, email, phone, api_key, status, created_at FROM users WHERE phone = ?");
-        $stmt->bind_param("s", $phone);
-        if ($stmt->execute()) {
-            // $user = $stmt->get_result()->fetch_assoc();
-            $stmt->bind_result($name, $email, $phone, $api_key, $status, $created_at);
-            $stmt->fetch();
-            $user = array();
-            $user["name"] = $name;
-            $user["email"] = $email;
-            $user["phone"] = $phone;
-            $user["api_key"] = $api_key;
-            $user["status"] = $status;
-            $user["created_at"] = $created_at;
-            $stmt->close();
-            return $user;
-        } else {
-            return NULL;
-        }
+      //todo
+
     }
 
     /**
@@ -187,17 +140,7 @@ class DbHandler {
      * @param String $user_id user id primary key in user table
      */
     public function getApiKeyById($user_id) {
-        $stmt = $this->conn->prepare("SELECT api_key FROM users WHERE id = ?");
-        $stmt->bind_param("i", $user_id);
-        if ($stmt->execute()) {
-            // $api_key = $stmt->get_result()->fetch_assoc();
-            // TODO
-            $stmt->bind_result($api_key);
-            $stmt->close();
-            return $api_key;
-        } else {
-            return NULL;
-        }
+       //todo
     }
 
     /**
@@ -252,6 +195,20 @@ class DbHandler {
             // post row created
             $new_post_id = mysql_insert_id();
             return $new_post_id;
+        } else {
+            // post failed to create
+            return NULL;
+        }
+    }
+    public function createImage($post_id, $name) {
+
+        $query = "INSERT INTO images VALUES(NULL, '$name', '$post_id')";
+        $result = $this->queryMysql($query);
+
+        if ($result) {
+            // post row created
+            $image_id = mysql_insert_id();
+            return $image_id;
         } else {
             // post failed to create
             return NULL;

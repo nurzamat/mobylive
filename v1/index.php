@@ -404,11 +404,22 @@ $app->post('/posts/:id/images', 'authenticate', function($post_id) use($app) {
                     imagedestroy($tmp);
                     imagedestroy($src);
                 }
-                // File successfully uploaded
-                $response['message'] = 'File uploaded successfully!';
-                $response['error'] = false;
-                $response['file_path'] = $saveto;
-                $response['image'] = basename($_FILES['image']['name']);
+                //write to db
+                $db = new DbHandler();
+                $image_id = $db->createImage($post_id, $name);
+                if($image_id != NULL)
+                {
+                    $response['message'] = 'File uploaded successfully!';
+                    $response['error'] = false;
+                    $response['image_id'] = $image_id;
+                    //$response['file_path'] = $saveto;
+                    //$response['image'] = basename($_FILES['image']['name']);
+                }
+                else
+                {
+                    $response["error"] = true;
+                    $response["message"] = "Failed to create image in db. Please try again";
+                }
             }
         } catch (Exception $e) {
             // Exception occurred. Make error flag true
@@ -422,23 +433,6 @@ $app->post('/posts/:id/images', 'authenticate', function($post_id) use($app) {
     }
 
     echo json_encode($response);
-    //end ravi
-
-    //$db = new DbHandler();
-
-    // creating new task
-    //$post_id = 1;//$db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $city, $country);
-
-   // if ($post_id != NULL) {
-   //     $response["error"] = false;
-   //     $response["message"] = "Post created successfully";
-   //     $response["post_id"] = $post_id;
-   //     echoRespnse(201, $response);
-   // } else {
-   //     $response["error"] = true;
-   //     $response["message"] = "Failed to create post. Please try again";
-   //     echoRespnse(200, $response);
-   // }
 });
 
 /**
