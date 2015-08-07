@@ -222,7 +222,7 @@ $app->get('/posts/category/:id/:page', function($category_id, $page) {
             $tmp["title"] = $post->title;
             $tmp["content"] = $post->content;
             $tmp["price"] = $post->price;
-            $tmp["pricecurrency"] = $post->pricecurrency;
+            $tmp["price_currency"] = $post->pricecurrency;
             $tmp["created_at"] = $post->created_at;
             $tmp["post_status"] = $post->post_status;
             $tmp["hitcount"] = $post->hitcount;
@@ -289,7 +289,7 @@ $app->get('/posts/subcategory/:id/:page', function($subcategory_id, $page) {
         $tmp["title"] = $post->title;
         $tmp["content"] = $post->content;
         $tmp["price"] = $post->price;
-        $tmp["pricecurrency"] = $post->pricecurrency;
+        $tmp["price_currency"] = $post->pricecurrency;
         $tmp["created_at"] = $post->created_at;
         $tmp["post_status"] = $post->post_status;
         $tmp["hitcount"] = $post->hitcount;
