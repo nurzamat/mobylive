@@ -389,8 +389,8 @@ $app->post('/posts/:id/images', 'authenticate', function($post_id) use($app) {
 
     if (isset($_FILES['image']['name']) && $_FILES["image"]["size"] < 5000000)
     {
-        $name = uniqid('img-'.date('Ymd').'-');
-        $saveto = "../media/"."$name.jpg";
+        $name = uniqid('img-'.date('Ymd').'-').".jpg";
+        $saveto = "../media/"."$name";
 
         try {
             // Throws exception incase file is not being moved
