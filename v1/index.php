@@ -186,19 +186,37 @@ $app->get('/posts/category/:id/:page', function($category_id, $page) {
     $response = array();
     $db = new DbHandler();
 
-    // fetching all user posts
-    $result = $db->getPostsByCategory($category_id, $page);
+    // fetching all category posts
+    $result_posts = $db->getPostsByCategory($category_id, $page);
+    $result_images = $db->getImages();
+    $images_arr = array();
+    while ($image = mysql_fetch_object($result_images))
+    {
+        $tmp_sub = array();
+        $tmp_sub["id"] = $image->ID;
+        $tmp_sub["original_image"] = $image->name;
+        $tmp_sub["idPost"] = $image->idPost;
+        array_push($images_arr, $tmp_sub);
+    }
 
     $response["error"] = false;
     $response["posts"] = array();
 
-    // looping through result and preparing posts array
-    if (mysql_num_rows($result) > 0)
+    try
     {
-        while ($post = mysql_fetch_object($result))
+        // looping through result and preparing posts array
+        while ($post = mysql_fetch_object($result_posts))
         {
             $tmp = array();
-            $images_result = $db->getImagesByPost($post->id);
+            $images_tmp = array();
+
+            for ($i = 0; $i < count($images_arr); $i++)
+            {
+                if($images_arr[$i]["idPost"] == $post->id)
+                {
+                    array_push($images_tmp, $images_arr[$i]);
+                }
+            }
 
             $tmp["id"] = $post->id;
             $tmp["title"] = $post->title;
@@ -214,11 +232,17 @@ $app->get('/posts/category/:id/:page', function($category_id, $page) {
             $tmp["user_name"] = $post->name;
             $tmp["user_phone"] = $post->phone;
             $tmp["user_status"] = $post->user_status;
-            $tmp["images"] = $images_result;
+            $tmp["images"] = $images_tmp;
 
             array_push($response["posts"], $tmp);
         }
     }
+    catch (Exception $e) {
+        // Exception occurred. Make error flag true
+        $response['error'] = true;
+        $response['message'] = $e->getMessage();
+    }
+
     echoRespnse(200, $response);
 });
 
@@ -233,32 +257,51 @@ $app->get('/posts/subcategory/:id/:page', function($subcategory_id, $page) {
     $db = new DbHandler();
 
     // fetching all user posts
-    $result = $db->getPostsBySubCategory($subcategory_id, $page);
+    $result_posts = $db->getPostsBySubCategory($subcategory_id, $page);
+    $result_images = $db->getImages();
+    $images_arr = array();
+    while ($image = mysql_fetch_object($result_images))
+    {
+        $tmp_sub = array();
+        $tmp_sub["id"] = $image->ID;
+        $tmp_sub["original_image"] = $image->name;
+        $tmp_sub["idPost"] = $image->idPost;
+        array_push($images_arr, $tmp_sub);
+    }
 
     $response["error"] = false;
     $response["posts"] = array();
 
     // looping through result and preparing posts array
-    if (mysql_num_rows($result) > 0)
-    {
-        while ($post = mysql_fetch_object($result)) {
-            $tmp = array();
-            $tmp["id"] = $post->ID;
-            $tmp["title"] = $post->title;
-            $tmp["content"] = $post->content;
-            $tmp["price"] = $post->price;
-            $tmp["pricecurrency"] = $post->pricecurrency;
-            $tmp["created_at"] = $post->created_at;
-            $tmp["post_status"] = $post->post_status;
-            $tmp["hitcount"] = $post->hitcount;
-            $tmp["city"] = $post->city;
-            $tmp["country"] = $post->country;
-            $tmp["user_id"] = $post->user_id;
-            $tmp["user_name"] = $post->name;
-            $tmp["user_phone"] = $post->phone;
-            $tmp["user_status"] = $post->user_status;
-            array_push($response["posts"], $tmp);
+    while ($post = mysql_fetch_object($result_posts)) {
+        $tmp = array();
+        $images_tmp = array();
+
+        for ($i = 0; $i < count($images_arr); $i++)
+        {
+            if($images_arr[$i]["idPost"] == $post->id)
+            {
+                array_push($images_tmp, $images_arr[$i]);
+            }
         }
+
+        $tmp["id"] = $post->id;
+        $tmp["title"] = $post->title;
+        $tmp["content"] = $post->content;
+        $tmp["price"] = $post->price;
+        $tmp["pricecurrency"] = $post->pricecurrency;
+        $tmp["created_at"] = $post->created_at;
+        $tmp["post_status"] = $post->post_status;
+        $tmp["hitcount"] = $post->hitcount;
+        $tmp["city"] = $post->city;
+        $tmp["country"] = $post->country;
+        $tmp["user_id"] = $post->user_id;
+        $tmp["user_name"] = $post->name;
+        $tmp["user_phone"] = $post->phone;
+        $tmp["user_status"] = $post->user_status;
+        $tmp["images"] = $images_tmp;
+
+        array_push($response["posts"], $tmp);
     }
 
     echoRespnse(200, $response);
@@ -541,6 +584,15 @@ $app->get('/categories', function() {
     // fetching all user posts
     $result_cat = $db->getCategories();
     $result_subcat = $db->getSubCategories();
+    $subcat_arr = array();
+    while ($subcat = mysql_fetch_object($result_subcat))
+    {
+        $tmp_sub = array();
+        $tmp_sub["id"] = $subcat->ID;
+        $tmp_sub["name"] = $subcat->name;
+        $tmp_sub["idCategory"] = $subcat->idCategory;
+        array_push($subcat_arr, $tmp_sub);
+    }
 
     $response["error"] = false;
     $response["categories"] = array();
@@ -551,16 +603,12 @@ $app->get('/categories', function() {
         $subcat_tmp = array();
         $tmp = array();
 
-        while ($subcat = mysql_fetch_object($result_subcat))
+        for ($i = 0; $i < count($subcat_arr); $i++)
         {
-            $tmp_sub = array();
-         if($subcat->idCategory == $cat->ID)
-         {
-             $tmp_sub["id"] = $subcat->ID;
-             $tmp_sub["name"] = $subcat->name;
-             $tmp_sub["idCategory"] = $subcat->idCategory;
-             array_push($subcat_tmp, $tmp_sub);
-         }
+            if($subcat_arr[$i]["idCategory"] == $cat->ID)
+            {
+                array_push($subcat_tmp, $subcat_arr[$i]);
+            }
         }
 
         $tmp["id"] = $cat->ID;

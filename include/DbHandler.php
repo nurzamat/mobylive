@@ -267,7 +267,7 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
         //$total_pages = ceil($total_records / $num_rec_per_page);
         $start_from = ($page-1) * $num_rec_per_page;
         $query = $query." LIMIT  $start_from, $num_rec_per_page";
-       //end of paging
+        //end of paging
         $result = $this->queryMysql($query);
 
         return $result;
@@ -288,6 +288,14 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
     public function getImagesByPost($post_id) {
 
         $query = "SELECT * FROM images WHERE idPost='$post_id'";
+        $result = $this->queryMysql($query);
+
+        return $result;
+    }
+
+    public function getImages() {
+
+        $query = "SELECT * FROM images";
         $result = $this->queryMysql($query);
 
         return $result;
