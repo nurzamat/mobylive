@@ -596,6 +596,17 @@ $app->delete('/posts/:id', 'authenticate', function($post_id) use($app) {
     $response = array();
     $result = $db->deletePost($post_id);
     if ($result) {
+        //deleting images
+        $result_images = $db->deleteImagesByPost($post_id);
+        while ($image = mysql_fetch_object($result_images))
+        {
+            $target = "../media/".$image->name;
+            if (file_exists($target))
+            {
+                unlink($target);
+            }
+        }
+
         // post deleted successfully
         $response["error"] = false;
         $response["message"] = "Post deleted succesfully";

@@ -372,6 +372,20 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
             return false;
         }
     }
+    public function deleteImagesByPost($post_id) {
+
+        $query = "SELECT * FROM images WHERE idPost='$post_id'";
+        $result = $this->queryMysql($query);
+
+        $delete_query = "DELETE FROM images WHERE idPost = '$post_id'";
+        $delete_result = $this->queryMysql($delete_query);
+
+        if ($delete_result) {
+            return $result;
+        } else {
+            return NULL;
+        }
+    }
 
     /* ------------- `tasks` table method ------------------ */
 
