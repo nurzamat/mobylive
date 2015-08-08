@@ -618,7 +618,7 @@ $app->delete('/images/:id', 'authenticate', function($image_id) use($app) {
     $image_result = $db->getImage($image_id);
     $image = mysql_fetch_object($image_result);
 
-    $target = "../media/"."$image";
+    $target = "../media/".$image->name;
     $result = false;
     if (file_exists($target)) {
         unlink($target); // Delete now
