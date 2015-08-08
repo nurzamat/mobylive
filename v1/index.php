@@ -585,9 +585,9 @@ $app->put('/posts/:id', 'authenticate', function($post_id) use($app) {
 });
 
 /**
- * Deleting task. Users can delete only their tasks
+ * Deleting post. Users can delete only their posts
  * method DELETE
- * url /tasks
+ * url /posts
  */
 $app->delete('/posts/:id', 'authenticate', function($post_id) use($app) {
     global $user_id;
@@ -596,13 +596,44 @@ $app->delete('/posts/:id', 'authenticate', function($post_id) use($app) {
     $response = array();
     $result = $db->deletePost($post_id);
     if ($result) {
-        // task deleted successfully
+        // post deleted successfully
         $response["error"] = false;
         $response["message"] = "Post deleted succesfully";
     } else {
-        // task failed to delete
+        // post failed to delete
         $response["error"] = true;
         $response["message"] = "Post failed to delete. Please try again!";
+    }
+    echoRespnse(200, $response);
+});
+/**
+ * Deleting post image. Users can delete only their images
+ * method DELETE
+ * url /images
+ */
+$app->delete('/images/:id', 'authenticate', function($image_id) use($app) {
+    global $user_id;
+
+    $db = new DbHandler();
+    $image_result = $db->getImage($image_id);
+    $image = mysql_fetch_object($image_result);
+
+    $target = "../media/"."$image";
+    $result = false;
+    if (file_exists($target)) {
+        unlink($target); // Delete now
+        $result = $db->deleteImage($image_id);
+    }
+
+    $response = array();
+    if ($result) {
+        // post deleted successfully
+        $response["error"] = false;
+        $response["message"] = "Image deleted succesfully";
+    } else {
+        // post failed to delete
+        $response["error"] = true;
+        $response["message"] = "Image failed to delete. Please try again!";
     }
     echoRespnse(200, $response);
 });

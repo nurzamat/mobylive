@@ -315,6 +315,13 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
 
         return $result;
     }
+    public function getImage($image_id) {
+
+        $query = "SELECT * FROM images WHERE ID='$image_id'";
+        $result = $this->queryMysql($query);
+
+        return $result;
+    }
 
     public function getCategories() {
         $query = "SELECT * FROM category";
@@ -344,7 +351,19 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
 
     public function deletePost($post_id) {
 
-        $query = "DELETE FROM posts WHERE id = '$post_id'";
+        $query = "DELETE FROM posts WHERE ID = '$post_id'";
+        $result = $this->queryMysql($query);
+
+        if ($result) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function deleteImage($image_id) {
+
+        $query = "DELETE FROM images WHERE ID = '$image_id'";
         $result = $this->queryMysql($query);
 
         if ($result) {
