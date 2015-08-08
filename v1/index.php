@@ -226,6 +226,8 @@ $app->get('/posts/user/:id/:page', function($user_id, $page) {
             $tmp["price_currency"] = $post->pricecurrency;
             $tmp["created_at"] = $post->created_at;
             $tmp["post_status"] = $post->status;
+            $tmp["id_category"] = $post->idCategory;
+            $tmp["id_subcategory"] = $post->idSubCategory;
             $tmp["hitcount"] = $post->hitcount;
             $tmp["city"] = $post->city;
             $tmp["country"] = $post->country;
