@@ -256,6 +256,21 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
 
         return $result;
     }
+    public function getUserPostsByPage($user_id, $page) {
+
+        $query = "SELECT * FROM posts WHERE idUser = '$user_id'";
+        //paging
+        $num_rec_per_page = NUM_REC_PER_PAGE;
+        //$advsQ = queryMysql($query);
+        //$total_records = mysql_num_rows($advsQ);  //count number of records
+        //$total_pages = ceil($total_records / $num_rec_per_page);
+        $start_from = ($page-1) * $num_rec_per_page;
+        $query = $query." LIMIT  $start_from, $num_rec_per_page";
+        //end of paging
+        $result = $this->queryMysql($query);
+
+        return $result;
+    }
 
     public function getPostsByCategory($category_id, $page) {
 

@@ -177,6 +177,72 @@ $app->get('/posts', 'authenticate', function() {
     echoRespnse(200, $response);
 });
 /**
+ * Listing posts of particual user by page
+ * method GET
+ * url /posts/page/:page
+ */
+$app->get('/posts/user/:id/:page', function($user_id, $page) {
+
+    $response = array();
+    $db = new DbHandler();
+
+    // fetching all user posts
+    $result_posts = $db->getUserPostsByPage($user_id, $page);
+    $result_images = $db->getImages();
+    $images_arr = array();
+    while ($image = mysql_fetch_object($result_images))
+    {
+        $tmp_sub = array();
+        $tmp_sub["id"] = $image->ID;
+        $tmp_sub["original_image"] = $image->name;
+        $tmp_sub["idPost"] = $image->idPost;
+        array_push($images_arr, $tmp_sub);
+    }
+
+    $response["error"] = false;
+    $response["posts"] = array();
+
+    // looping through result and preparing posts array
+    try
+    {
+        // looping through result and preparing posts array
+        while ($post = mysql_fetch_object($result_posts))
+        {
+            $tmp = array();
+            $images_tmp = array();
+
+            for ($i = 0; $i < count($images_arr); $i++)
+            {
+                if($images_arr[$i]["idPost"] == $post->ID)
+                {
+                    array_push($images_tmp, $images_arr[$i]);
+                }
+            }
+
+            $tmp["id"] = $post->ID;
+            $tmp["title"] = $post->title;
+            $tmp["content"] = $post->content;
+            $tmp["price"] = $post->price;
+            $tmp["price_currency"] = $post->pricecurrency;
+            $tmp["created_at"] = $post->created_at;
+            $tmp["post_status"] = $post->status;
+            $tmp["hitcount"] = $post->hitcount;
+            $tmp["city"] = $post->city;
+            $tmp["country"] = $post->country;
+            $tmp["images"] = $images_tmp;
+
+            array_push($response["posts"], $tmp);
+        }
+    }
+    catch (Exception $e) {
+        // Exception occurred. Make error flag true
+        $response['error'] = true;
+        $response['message'] = $e->getMessage();
+    }
+
+    echoRespnse(200, $response);
+});
+/**
  * Listing all posts of particual category
  * method GET
  * url /posts/category/:id
