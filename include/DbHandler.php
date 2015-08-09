@@ -272,6 +272,22 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
         return $result;
     }
 
+    public function updatePostsHitcount($post_id) {
+
+        $query = "SELECT * FROM posts WHERE ID = '$post_id'";
+        $post = mysql_fetch_object($this->queryMysql($query));
+        $count = $post->hitcount + 1;
+
+        $query_update = "UPDATE posts SET hitcount = '$count' WHERE ID = '$post_id'";
+        $result = $this->queryMysql($query_update);
+
+        if ($result) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public function getPostsByCategory($category_id, $page) {
 
         $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM posts AS p LEFT JOIN users as u ON p.idUser = u.ID WHERE p.idCategory='$category_id'";

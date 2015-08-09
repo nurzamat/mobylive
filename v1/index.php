@@ -245,6 +245,29 @@ $app->get('/posts/user/:id/:page', function($user_id, $page) {
     echoRespnse(200, $response);
 });
 /**
+ * Updating particular post's hitcount
+ * method GET
+ * url /posts/:id/hitcount
+ */
+$app->get('/posts/:id/hitcount', function($post_id) {
+
+    $db = new DbHandler();
+    $response = array();
+
+    // updating post hitcount
+    $result = $db->updatePostsHitcount($post_id);
+    if ($result) {
+        // post updated successfully
+        $response["error"] = false;
+        $response["message"] = "Post's hitcount updated successfully";
+    } else {
+        // task failed to update
+        $response["error"] = true;
+        $response["message"] = "Post's hitcount failed to update. Please try again!";
+    }
+    echoRespnse(200, $response);
+});
+/**
  * Listing all posts of particual category
  * method GET
  * url /posts/category/:id
@@ -554,7 +577,6 @@ $app->post('/posts/:id/images', 'authenticate', function($post_id) use($app) {
 /**
  * Updating existing post
  * method PUT
- * params task, status
  * url - /posts/:id
  */
 $app->put('/posts/:id', 'authenticate', function($post_id) use($app) {
@@ -583,7 +605,6 @@ $app->put('/posts/:id', 'authenticate', function($post_id) use($app) {
     }
     echoRespnse(200, $response);
 });
-
 /**
  * Deleting post. Users can delete only their posts
  * method DELETE
