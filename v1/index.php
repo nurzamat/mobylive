@@ -582,18 +582,23 @@ $app->post('/posts/:id/images', 'authenticate', function($post_id) use($app) {
 $app->put('/posts/:id', 'authenticate', function($post_id) use($app) {
     // check for required params
     //verifyRequiredParams(array('post', 'status'));
-
-    global $user_id;
-
+    $response = array();
     $req = $app->request();
     $body = json_decode($req->getBody());
-    $status = $body->status;
+    // reading put params
+    $title = $body->title;
+    $content = $body->content;
+    $price = $body->price;
+    $price_currency = $body->price_currency;
+    $idCategory = $body->idCategory;
+    $idSubcategory = $body->idSubcategory;
+    //$city = $body->city;
+    //$country = $body->country;
 
+    global $user_id;
     $db = new DbHandler();
-    $response = array();
-
-    // updating task
-    $result = $db->updatePost($user_id, $post_id, $status);
+    // updating post
+    $result = $db->updatePost($post_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory);
     if ($result) {
         // task updated successfully
         $response["error"] = false;
