@@ -353,9 +353,9 @@ u.api_key, u.status as user_status, u.created_at FROM posts AS p LEFT JOIN users
         return $result;
     }
 
-    public function updatePost($post_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory)
+    public function updatePost($post_id, $title, $content, $price, $pricecurrency, $idCategory, $idSubcategory)
     {
-        $query = "UPDATE posts SET title = '$title', content = '$content', price = '$price', price_currency = '$price_currency', idCategory = '$idCategory', idSubcategory = '$idSubcategory' WHERE ID = '$post_id'";
+        $query = "UPDATE posts SET title = '$title', content = '$content', price = '$price', pricecurrency = '$pricecurrency', idCategory = '$idCategory', idSubcategory = '$idSubcategory' WHERE ID = '$post_id'";
         $result = $this->queryMysql($query);
 
         if ($result) {

@@ -589,7 +589,7 @@ $app->put('/posts/:id', 'authenticate', function($post_id) use($app) {
     $title = $body->title;
     $content = $body->content;
     $price = $body->price;
-    $price_currency = $body->price_currency;
+    $pricecurrency = $body->price_currency;
     $idCategory = $body->idCategory;
     $idSubcategory = $body->idSubcategory;
     //$city = $body->city;
@@ -598,7 +598,7 @@ $app->put('/posts/:id', 'authenticate', function($post_id) use($app) {
     global $user_id;
     $db = new DbHandler();
     // updating post
-    $result = $db->updatePost($post_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory);
+    $result = $db->updatePost($post_id, $title, $content, $price, $pricecurrency, $idCategory, $idSubcategory);
     if ($result) {
         // task updated successfully
         $response["error"] = false;
