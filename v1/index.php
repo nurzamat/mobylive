@@ -435,22 +435,23 @@ $app->get('/posts/:id', 'authenticate', function($post_id) {
 $app->post('/posts', 'authenticate', function() use ($app) {
     // check for required params
     //verifyRequiredParams(array('post'));
-    $response = array();
-    $req = $app->request();
-    //$body = json_decode($req->getBody());
-    // reading post params
-    $title = $req->post('title');//$body->title;
-    $content = $req->post('content');//$body->content;
-    $price = $req->post('price');//$body->price;
-    $price_currency = $req->post('price_currency');//$body->price_currency;
-    $idCategory = $req->post('idCategory');//$body->idCategory;
-    $idSubcategory = $req->post('idSubcategory');//$body->idSubcategory;
-    $city = $req->post('city');//$body->city;
-    $country = $req->post('country');//$body->country;
-
     global $user_id;
-    $db = new DbHandler();
+    $response = array();
 
+    $req = $app->request();
+    $body = json_decode($req->getBody());
+    // reading post params
+
+    $title = $body->title;
+    $content = $body->content;
+    $price = $body->price;
+    $price_currency = $body->price_currency;
+    $idCategory = $body->idCategory;
+    $idSubcategory = $body->idSubcategory;
+    $city = $body->city;
+    $country = $body->country;
+
+    $db = new DbHandler();
     // creating new task
     $post_id = $db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $city, $country);
 
