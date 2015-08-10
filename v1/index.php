@@ -585,14 +585,14 @@ $app->put('/posts/:id', 'authenticate', function($post_id) use($app) {
     //verifyRequiredParams(array('post', 'status'));
     $response = array();
     $req = $app->request();
-    //$body = json_decode($req->getBody());
+    $body = json_decode($req->getBody());
     // reading put params
-    $title = $req->put('title');//$body->title;
-    $content = $req->put('content');//$body->content;
-    $price = $req->put('price');//$body->price;
-    $pricecurrency = $req->put('price_currency');//$body->price_currency;
-    $idCategory = $req->put('idCategory');//$body->idCategory;
-    $idSubcategory = $req->put('idSubcategory');//$body->idSubcategory;
+    $title = $body->title;
+    $content = $body->content;
+    $price = $body->price;
+    $pricecurrency = $body->price_currency;
+    $idCategory = $body->idCategory;
+    $idSubcategory = $body->idSubcategory;
     //$city = $body->city;
     //$country = $body->country;
 
