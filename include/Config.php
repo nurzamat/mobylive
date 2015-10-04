@@ -2,10 +2,10 @@
 /**
  * Database configuration
  */
-define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'mobylive');
+define('DB_USERNAME', 'user13488_ananas');
+define('DB_PASSWORD', 'kol0b0k');
+define('DB_HOST', '176.126.165.135');
+define('DB_NAME', 'user13488_ananas');
 
 define('USER_CREATED_SUCCESSFULLY', 0);
 define('USER_CREATE_FAILED', 1);

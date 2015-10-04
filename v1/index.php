@@ -61,7 +61,6 @@ $app->post('/register', function() use ($app) {
     // check for required params
     //verifyRequiredParams(array('name', 'email', 'phone', 'password'));
 
-    $response = array();
     $req = $app->request();
     $body = json_decode($req->getBody());
     // reading post params
@@ -71,24 +70,24 @@ $app->post('/register', function() use ($app) {
     $phone = $app->request()->post('phone');
     $password = $app->request()->post('password');
     */
-    $name = $body->name;
+    $username = $body->username;
     $email = $body->email;
-    $phone = $body->phone;
     $password = $body->password;
 
     // validating email address
     validateEmail($email);
+    //todo validate username
 
     $db = new DbHandler();
-    $res = $db->createUser($name, $email, $phone, $password);
+    $response = $db->createUser($username, $email, $password);
 
-    if ($res == USER_CREATED_SUCCESSFULLY) {
+    if ($response["message"] == USER_CREATED_SUCCESSFULLY) {
         $response["error"] = false;
         $response["message"] = "You are successfully registered";
-    } else if ($res == USER_CREATE_FAILED) {
+    } else if ($response["message"] == USER_CREATE_FAILED) {
         $response["error"] = true;
         $response["message"] = "Oops! An error occurred while registering";
-    } else if ($res == USER_ALREADY_EXISTED) {
+    } else if ($response["message"] == USER_ALREADY_EXISTED) {
         $response["error"] = true;
         $response["message"] = "Sorry, this email already existed";
     }
@@ -105,7 +104,6 @@ $app->post('/register', function() use ($app) {
 $app->post('/login', function() use ($app) {
     // check for required params
     //verifyRequiredParams(array('email', 'password'));
-
     $req = $app->request();
     $body = json_decode($req->getBody());
     // reading post params
