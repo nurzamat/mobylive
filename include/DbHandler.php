@@ -28,10 +28,12 @@ class DbHandler {
             // insert query
             $query = "INSERT INTO arzymo_users VALUES(NULL, '$username', '$email', '', '$password_hash', '$api_key', 1, now())";
             $result = $this->queryMysql($query);
+            $id = mysql_insert_id();
 
             // Check for successful insertion
             if ($result) {
                 // User successfully inserted
+                $response["id"] = $id;
                 $response["username"] = $username;
                 $response["email"] = $email;
                 $response["password"] = $password;
