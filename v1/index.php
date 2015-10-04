@@ -64,7 +64,6 @@ $app->post('/register', function() use ($app) {
     $response = array();
     $req = $app->request();
     $body = json_decode($req->getBody());
-
     // reading post params
     /*
     $name = $app->request()->post('name');
@@ -462,7 +461,7 @@ $app->post('/posts', 'authenticate', function() use ($app) {
         echoRespnse(201, $response);
     } else {
         $response["error"] = true;
-        $response["message"] = "Failed to create post. Please try again";
+        $response["message"] = "Failed to create advertisement. Please try again";
         echoRespnse(200, $response);
     }
 });
