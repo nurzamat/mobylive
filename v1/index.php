@@ -318,6 +318,8 @@ $app->get('/posts/category/:id/:page', function($category_id, $page) {
             $tmp["country"] = $post->country;
             $tmp["user_id"] = $post->user_id;
             $tmp["user_name"] = $post->name;
+            $tmp["user_username"] = $post->username;
+            $tmp["user_email"] = $post->email;
             $tmp["user_phone"] = $post->phone;
             $tmp["user_status"] = $post->user_status;
             $tmp["images"] = $images_tmp;
@@ -385,6 +387,8 @@ $app->get('/posts/subcategory/:id/:page', function($subcategory_id, $page) {
         $tmp["country"] = $post->country;
         $tmp["user_id"] = $post->user_id;
         $tmp["user_name"] = $post->name;
+        $tmp["user_username"] = $post->username;
+        $tmp["user_email"] = $post->email;
         $tmp["user_phone"] = $post->phone;
         $tmp["user_status"] = $post->user_status;
         $tmp["images"] = $images_tmp;

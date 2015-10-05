@@ -278,7 +278,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
     public function getPostsByCategory($category_id, $page) {
 
-        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idCategory='$category_id'";
+        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idCategory='$category_id'";
         //paging
         $num_rec_per_page = NUM_REC_PER_PAGE;
         //$advsQ = queryMysql($query);
@@ -293,7 +293,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
     }
     public function getPostsBySubCategory($subcategory_id, $page) {
 
-        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idSubCategory='$subcategory_id'";
+        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idSubCategory='$subcategory_id'";
         //paging
         $num_rec_per_page = NUM_REC_PER_PAGE;
         $start_from = ($page-1) * $num_rec_per_page;
