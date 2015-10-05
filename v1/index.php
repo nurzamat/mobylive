@@ -445,12 +445,13 @@ $app->post('/posts', 'authenticate', function() use ($app) {
     $price_currency = $body->price_currency;
     $idCategory = $body->idCategory;
     $idSubcategory = $body->idSubcategory;
+    $idSubSubcategory = 0;
     $city = $body->city;
     $country = $body->country;
 
     $db = new DbHandler();
     // creating new task
-    $post_id = $db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $city, $country);
+    $post_id = $db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $city, $country);
 
     if ($post_id != NULL) {
         $response["error"] = false;
@@ -590,13 +591,14 @@ $app->put('/posts/:id', 'authenticate', function($post_id) use($app) {
     $pricecurrency = $body->price_currency;
     $idCategory = $body->idCategory;
     $idSubcategory = $body->idSubcategory;
+    $idSubSubcategory = 0;
     //$city = $body->city;
     //$country = $body->country;
 
     global $user_id;
     $db = new DbHandler();
     // updating post
-    $result = $db->updatePost($post_id, $title, $content, $price, $pricecurrency, $idCategory, $idSubcategory);
+    $result = $db->updatePost($post_id, $title, $content, $price, $pricecurrency, $idCategory, $idSubcategory, $idSubSubcategory);
     if ($result) {
         // task updated successfully
         $response["error"] = false;

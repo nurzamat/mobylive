@@ -173,9 +173,9 @@ class DbHandler {
      * @param String $user_id user id to whom task belongs to
      * @param String $task task text
      */
-    public function createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $city, $country) {
+    public function createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $city, $country) {
 
-        $query = "INSERT INTO arzymo_posts VALUES(NULL, '$title', '$content', '$price', '$price_currency', now(), 0, now(), '$idCategory', '$idSubcategory', 0, '$city', '$country', '$user_id')";
+        $query = "INSERT INTO arzymo_posts VALUES(NULL, '$title', '$content', '$price', '$price_currency', now(), 0, now(), '$idCategory', '$idSubcategory', '$idSubSubcategory', 0, '$city', '$country', '$user_id')";
         $result = $this->queryMysql($query);
 
         if ($result) {
@@ -204,7 +204,7 @@ class DbHandler {
 
     public function getPost($post_id) {
 
-        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.hitcount, p.city, p.country, p.idUser, u.name, u.email, u.phone,
+        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.name, u.email, u.phone,
 u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.ID='$post_id'";
         $result = mysql_fetch_object($this->queryMysql($query));
 
@@ -220,6 +220,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
             $res["post_status"] = $result->post_status;
             $res["idCategory"] = $result->idCategory;
             $res["idSubCategory"] = $result->idSubCategory;
+            $res["idSubSubCategory"] = $result->idSubSubCategory;
             $res["hitcount"] = $result->hitcount;
             $res["city"] = $result->city;
             $res["country"] = $result->country;
@@ -277,7 +278,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
     public function getPostsByCategory($category_id, $page) {
 
-        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idCategory='$category_id'";
+        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idCategory='$category_id'";
         //paging
         $num_rec_per_page = NUM_REC_PER_PAGE;
         //$advsQ = queryMysql($query);
@@ -292,7 +293,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
     }
     public function getPostsBySubCategory($subcategory_id, $page) {
 
-        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idSubCategory='$subcategory_id'";
+        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idSubCategory='$subcategory_id'";
         //paging
         $num_rec_per_page = NUM_REC_PER_PAGE;
         $start_from = ($page-1) * $num_rec_per_page;
@@ -340,9 +341,9 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
         return $result;
     }
 
-    public function updatePost($post_id, $title, $content, $price, $pricecurrency, $idCategory, $idSubcategory)
+    public function updatePost($post_id, $title, $content, $price, $pricecurrency, $idCategory, $idSubcategory, $idSubSubcategory)
     {
-        $query = "UPDATE arzymo_posts SET title = '$title', content = '$content', price = '$price', pricecurrency = '$pricecurrency', idCategory = '$idCategory', idSubcategory = '$idSubcategory' WHERE ID = '$post_id'";
+        $query = "UPDATE arzymo_posts SET title = '$title', content = '$content', price = '$price', pricecurrency = '$pricecurrency', idCategory = '$idCategory', idSubcategory = '$idSubcategory', idSubSubcategory = '$idSubSubcategory' WHERE ID = '$post_id'";
         $result = $this->queryMysql($query);
 
         if ($result) {
