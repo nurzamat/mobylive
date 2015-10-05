@@ -26,7 +26,7 @@ class DbHandler {
             $api_key = $this->generateApiKey();
 
             // insert query
-            $query = "INSERT INTO arzymo_users VALUES(NULL, '$username', '$email', '', '$password_hash', '$api_key', 1, now())";
+            $query = "INSERT INTO arzymo_users VALUES(NULL, '', '$username', '$email', '', '$password_hash', '$api_key', 1, now())";
             $result = $this->queryMysql($query);
             $id = mysql_insert_id();
 
