@@ -174,94 +174,99 @@ $app->get('/posts', 'authenticate', function() {
     echoRespnse(200, $response);
 });
 /**
+ * Updating particular post's hitcount
+ * method GET
+ * url /posts/:id/hitcount
+ */
+$app->get('/posts/:id/hitcount/:user_id', function($post_id, $user_id) {
+
+    $db = new DbHandler();
+
+    // updating post hitcount
+    $response = $db->updatePostsHitcount($post_id, $user_id);
+
+    echoRespnse(200, $response);
+});
+
+/**
+ * Like Job
+ * method GET
+ * url /posts/:id/:user_id/like/:like
+ */
+$app->get('/posts/:id/:user_id/like/:like', function($post_id, $user_id, $like) {
+
+    $db = new DbHandler();
+
+    // updating like
+    $result = $db->updateLikes($post_id, $user_id, $like);
+
+    if ($result) {
+        // likes updated successfully
+        $response["error"] = false;
+        $response["message"] = "Likes updated successfully";
+    } else {
+        // task failed to update
+        $response["error"] = true;
+        $response["message"] = "Likes failed to update. Please try again!";
+    }
+
+    echoRespnse(200, $response);
+});
+
+/**
  * Listing posts of particual user by page
  * method GET
  * url /posts/page/:page
  */
 $app->get('/posts/user/:id/:page', function($user_id, $page) {
 
-    $response = array();
     $db = new DbHandler();
 
     // fetching all user posts
     $result_posts = $db->getUserPostsByPage($user_id, $page);
     $result_images = $db->getImages();
-    $images_arr = array();
-    while ($image = mysql_fetch_object($result_images))
-    {
-        $tmp_sub = array();
-        $tmp_sub["id"] = $image->ID;
-        $tmp_sub["original_image"] = $image->name;
-        $tmp_sub["idPost"] = $image->idPost;
-        array_push($images_arr, $tmp_sub);
-    }
 
-    $response["error"] = false;
-    $response["posts"] = array();
-
-    // looping through result and preparing posts array
-    try
-    {
-        // looping through result and preparing posts array
-        while ($post = mysql_fetch_object($result_posts))
-        {
-            $tmp = array();
-            $images_tmp = array();
-
-            for ($i = 0; $i < count($images_arr); $i++)
-            {
-                if($images_arr[$i]["idPost"] == $post->ID)
-                {
-                    array_push($images_tmp, $images_arr[$i]);
-                }
-            }
-
-            $tmp["id"] = $post->ID;
-            $tmp["title"] = $post->title;
-            $tmp["content"] = $post->content;
-            $tmp["price"] = $post->price;
-            $tmp["price_currency"] = $post->pricecurrency;
-            $tmp["created_at"] = $post->created_at;
-            $tmp["post_status"] = $post->status;
-            $tmp["id_category"] = $post->idCategory;
-            $tmp["id_subcategory"] = $post->idSubCategory;
-            $tmp["hitcount"] = $post->hitcount;
-            $tmp["city"] = $post->city;
-            $tmp["country"] = $post->country;
-            $tmp["images"] = $images_tmp;
-
-            array_push($response["posts"], $tmp);
-        }
-    }
-    catch (Exception $e) {
-        // Exception occurred. Make error flag true
-        $response['error'] = true;
-        $response['message'] = $e->getMessage();
-    }
+    $response = getPosts($result_posts, $result_images);
 
     echoRespnse(200, $response);
 });
+
 /**
- * Updating particular post's hitcount
+ * Listing liked posts of particual user by page
  * method GET
- * url /posts/:id/hitcount
  */
-$app->get('/posts/:id/hitcount', function($post_id) {
+$app->get('/posts/user/:id/likes/:page', function($user_id, $page) {
 
     $db = new DbHandler();
-    $response = array();
 
-    // updating post hitcount
-    $result = $db->updatePostsHitcount($post_id);
-    if ($result) {
-        // post updated successfully
-        $response["error"] = false;
-        $response["message"] = "Post's hitcount updated successfully";
-    } else {
-        // task failed to update
-        $response["error"] = true;
-        $response["message"] = "Post's hitcount failed to update. Please try again!";
-    }
+    $response = array();
+    $response["error"] = false;
+    $response["posts"] = array();
+
+    $result_posts = $db->getUserLikedPostsByPage($user_id, $page);
+    $result_images = $db->getImages();
+
+    if($result_posts != null)
+    $response = getPosts($result_posts, $result_images);
+
+    echoRespnse(200, $response);
+});
+
+/**
+ * Listing all posts
+ * method GET
+ * url /posts/
+ */
+$app->get('/posts/:page/:params', function($page, $params) {
+
+    $db = new DbHandler();
+
+    // fetching all category posts
+    $result_posts = $db->getPosts($page, sanitizeString($params));
+    $result_images = $db->getImages();
+
+    $response = getPosts($result_posts, $result_images);
+
     echoRespnse(200, $response);
 });
 /**
@@ -269,69 +274,15 @@ $app->get('/posts/:id/hitcount', function($post_id) {
  * method GET
  * url /posts/category/:id
  */
-$app->get('/posts/category/:id/:page', function($category_id, $page) {
+$app->get('/posts/category/:id/:page/:params', function($category_id, $page, $params) {
 
-    $response = array();
     $db = new DbHandler();
 
     // fetching all category posts
-    $result_posts = $db->getPostsByCategory($category_id, $page);
+    $result_posts = $db->getPostsByCategory($category_id, $page, sanitizeString($params));
     $result_images = $db->getImages();
-    $images_arr = array();
-    while ($image = mysql_fetch_object($result_images))
-    {
-        $tmp_sub = array();
-        $tmp_sub["id"] = $image->ID;
-        $tmp_sub["original_image"] = $image->name;
-        $tmp_sub["idPost"] = $image->idPost;
-        array_push($images_arr, $tmp_sub);
-    }
 
-    $response["error"] = false;
-    $response["posts"] = array();
-
-    try
-    {
-        // looping through result and preparing posts array
-        while ($post = mysql_fetch_object($result_posts))
-        {
-            $tmp = array();
-            $images_tmp = array();
-
-            for ($i = 0; $i < count($images_arr); $i++)
-            {
-                if($images_arr[$i]["idPost"] == $post->id)
-                {
-                    array_push($images_tmp, $images_arr[$i]);
-                }
-            }
-
-            $tmp["id"] = $post->id;
-            $tmp["title"] = $post->title;
-            $tmp["content"] = $post->content;
-            $tmp["price"] = $post->price;
-            $tmp["price_currency"] = $post->pricecurrency;
-            $tmp["created_at"] = $post->created_at;
-            $tmp["post_status"] = $post->post_status;
-            $tmp["hitcount"] = $post->hitcount;
-            $tmp["city"] = $post->city;
-            $tmp["country"] = $post->country;
-            $tmp["user_id"] = $post->user_id;
-            $tmp["user_name"] = $post->name;
-            $tmp["user_username"] = $post->username;
-            $tmp["user_email"] = $post->email;
-            $tmp["user_phone"] = $post->phone;
-            $tmp["user_status"] = $post->user_status;
-            $tmp["images"] = $images_tmp;
-
-            array_push($response["posts"], $tmp);
-        }
-    }
-    catch (Exception $e) {
-        // Exception occurred. Make error flag true
-        $response['error'] = true;
-        $response['message'] = $e->getMessage();
-    }
+    $response = getPosts($result_posts, $result_images);
 
     echoRespnse(200, $response);
 });
@@ -341,60 +292,15 @@ $app->get('/posts/category/:id/:page', function($category_id, $page) {
  * method GET
  * url /posts/subcategory/:id
  */
-$app->get('/posts/subcategory/:id/:page', function($subcategory_id, $page) {
+$app->get('/posts/subcategory/:id/:page/:params', function($subcategory_id, $page, $params) {
 
-    $response = array();
     $db = new DbHandler();
 
-    // fetching all user posts
-    $result_posts = $db->getPostsBySubCategory($subcategory_id, $page);
+    // fetching subcategory posts
+    $result_posts = $db->getPostsBySubCategory($subcategory_id, $page, sanitizeString($params));
     $result_images = $db->getImages();
-    $images_arr = array();
-    while ($image = mysql_fetch_object($result_images))
-    {
-        $tmp_sub = array();
-        $tmp_sub["id"] = $image->ID;
-        $tmp_sub["original_image"] = $image->name;
-        $tmp_sub["idPost"] = $image->idPost;
-        array_push($images_arr, $tmp_sub);
-    }
 
-    $response["error"] = false;
-    $response["posts"] = array();
-
-    // looping through result and preparing posts array
-    while ($post = mysql_fetch_object($result_posts)) {
-        $tmp = array();
-        $images_tmp = array();
-
-        for ($i = 0; $i < count($images_arr); $i++)
-        {
-            if($images_arr[$i]["idPost"] == $post->id)
-            {
-                array_push($images_tmp, $images_arr[$i]);
-            }
-        }
-
-        $tmp["id"] = $post->id;
-        $tmp["title"] = $post->title;
-        $tmp["content"] = $post->content;
-        $tmp["price"] = $post->price;
-        $tmp["price_currency"] = $post->pricecurrency;
-        $tmp["created_at"] = $post->created_at;
-        $tmp["post_status"] = $post->post_status;
-        $tmp["hitcount"] = $post->hitcount;
-        $tmp["city"] = $post->city;
-        $tmp["country"] = $post->country;
-        $tmp["user_id"] = $post->user_id;
-        $tmp["user_name"] = $post->name;
-        $tmp["user_username"] = $post->username;
-        $tmp["user_email"] = $post->email;
-        $tmp["user_phone"] = $post->phone;
-        $tmp["user_status"] = $post->user_status;
-        $tmp["images"] = $images_tmp;
-
-        array_push($response["posts"], $tmp);
-    }
+    $response = getPosts($result_posts, $result_images);
 
     echoRespnse(200, $response);
 });
@@ -452,10 +358,14 @@ $app->post('/posts', 'authenticate', function() use ($app) {
     $idSubSubcategory = 0;
     $city = $body->city;
     $country = $body->country;
+    $actionType = $body->actionType;
+    $sex = $body->sex;
+    $birth_year = $body->birth_year;
+    $displayed_name = $body->displayed_name;
 
     $db = new DbHandler();
     // creating new task
-    $post_id = $db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $city, $country);
+    $post_id = $db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $city, $country, $actionType, $sex, $birth_year, $displayed_name);
 
     if ($post_id != NULL) {
         $response["error"] = false;
@@ -832,6 +742,88 @@ function echoRespnse($status_code, $response) {
     $app->contentType('application/json');
 
     echo json_encode($response);
+}
+
+function sanitizeString($var)
+{
+    /*
+    $var = strip_tags($var);
+    //$var = htmlentities($var);
+    $var = htmlentities($var, ENT_QUOTES, "UTF-8");
+    $var = stripslashes($var);
+    return mysql_real_escape_string($var);
+    */
+    return $var;
+}
+
+
+function getPosts($result_posts, $result_images)
+{
+    $response = array();
+
+    $images_arr = array();
+
+    $response["error"] = false;
+    $response["posts"] = array();
+
+    try
+    {
+        while ($image = mysql_fetch_object($result_images))
+        {
+            $tmp_sub = array();
+            $tmp_sub["id"] = $image->ID;
+            $tmp_sub["original_image"] = $image->name;
+            $tmp_sub["idPost"] = $image->idPost;
+            array_push($images_arr, $tmp_sub);
+        }
+
+        // looping through result and preparing posts array
+        while ($post = mysql_fetch_object($result_posts))
+        {
+            $tmp = array();
+            $images_tmp = array();
+
+            for ($i = 0; $i < count($images_arr); $i++)
+            {
+                if($images_arr[$i]["idPost"] == $post->id)
+                {
+                    array_push($images_tmp, $images_arr[$i]);
+                }
+            }
+
+            $tmp["id"] = $post->id;
+            $tmp["title"] = $post->title;
+            $tmp["content"] = $post->content;
+            $tmp["price"] = $post->price;
+            $tmp["price_currency"] = $post->pricecurrency;
+            $tmp["created_at"] = $post->created_at;
+            $tmp["id_category"] = $post->idCategory;
+            $tmp["id_subcategory"] = $post->idSubCategory;
+            $tmp["post_status"] = $post->post_status;
+            $tmp["hitcount"] = $post->hitcount;
+            $tmp["city"] = $post->city;
+            $tmp["country"] = $post->country;
+            $tmp["sex"] = $post->sex;
+            $tmp["birth_year"] = $post->birth_year;
+            $tmp["displayed_name"] = $post->displayed_name;
+            $tmp["user_id"] = $post->user_id;
+            $tmp["user_name"] = $post->name;
+            $tmp["user_username"] = $post->username;
+            $tmp["user_email"] = $post->email;
+            $tmp["user_phone"] = $post->phone;
+            $tmp["user_status"] = $post->user_status;
+            $tmp["images"] = $images_tmp;
+
+            array_push($response["posts"], $tmp);
+        }
+    }
+    catch (Exception $e) {
+        // Exception occurred. Make error flag true
+        $response['error'] = true;
+        $response['message'] = $e->getMessage();
+    }
+
+    return $response;
 }
 
 $app->run();

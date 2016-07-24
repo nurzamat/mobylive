@@ -26,7 +26,7 @@ class DbHandler {
             $api_key = $this->generateApiKey();
 
             // insert query
-            $query = "INSERT INTO arzymo_users VALUES(NULL, '', '$username', '$email', '', '$password_hash', '$api_key', 1, now())";
+            $query = "INSERT INTO users VALUES(NULL, '', '$username', '$email', '', '$password_hash', '$api_key', 1, now())";
             $result = $this->queryMysql($query);
             $id = mysql_insert_id();
 
@@ -59,7 +59,7 @@ class DbHandler {
      */
     public function checkLoginByEmail($email, $password) {
         // fetching user by email
-        $query = "SELECT * FROM arzymo_users WHERE email='$email'";
+        $query = "SELECT * FROM users WHERE email='$email'";
 
         if (mysql_num_rows($this->queryMysql($query)) > 0) {
             // Found user with the email
@@ -89,7 +89,7 @@ class DbHandler {
      */
     private function isUserExistsByEmail($email)
     {
-        $query = "SELECT id from arzymo_users WHERE email = '$email'";
+        $query = "SELECT id from users WHERE email = '$email'";
         $num_rows = mysql_num_rows($this->queryMysql($query));
         if($num_rows > 0)
             return true;
@@ -101,7 +101,7 @@ class DbHandler {
      * @param String $email User email id
      */
     public function getUserByEmail($email) {
-        $query = "SELECT * FROM arzymo_users WHERE email='$email'";
+        $query = "SELECT * FROM users WHERE email='$email'";
 
         if (mysql_num_rows($this->queryMysql($query)) > 0) {
             // Found user with the email
@@ -135,7 +135,7 @@ class DbHandler {
      * @param String $api_key user api key
      */
     public function getUserId($api_key) {
-        $query = "SELECT id from arzymo_users WHERE api_key = '$api_key'";
+        $query = "SELECT id from users WHERE api_key = '$api_key'";
         $num_rows = mysql_num_rows($this->queryMysql($query));
         if ($num_rows > 0) {
             // TODO
@@ -153,7 +153,7 @@ class DbHandler {
      * @return boolean
      */
     public function isValidApiKey($api_key) {
-        $query = "SELECT id from arzymo_users WHERE api_key = '$api_key'";
+        $query = "SELECT id from users WHERE api_key = '$api_key'";
         $num_rows = mysql_num_rows($this->queryMysql($query));
         if($num_rows > 0)
             return true;
@@ -173,9 +173,10 @@ class DbHandler {
      * @param String $user_id user id to whom task belongs to
      * @param String $task task text
      */
-    public function createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $city, $country) {
+    public function createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $city, $country, $actionType, $sex, $birth_year, $displayed_name)
+    {
 
-        $query = "INSERT INTO arzymo_posts VALUES(NULL, '$title', '$content', '$price', '$price_currency', now(), 0, now(), '$idCategory', '$idSubcategory', '$idSubSubcategory', 0, '$city', '$country', '$user_id')";
+        $query = "INSERT INTO posts VALUES(NULL, '$title', '$content', '$price', '$price_currency', now(), 0, now(), '$idCategory', '$idSubcategory', '$idSubSubcategory', 0, '$city', '$country', '$user_id', '$actionType', '$sex', '$birth_year', '$displayed_name')";
         $result = $this->queryMysql($query);
 
         if ($result) {
@@ -189,7 +190,7 @@ class DbHandler {
     }
     public function createImage($post_id, $name) {
 
-        $query = "INSERT INTO arzymo_images VALUES(NULL, '$name', '$post_id')";
+        $query = "INSERT INTO images VALUES(NULL, '$name', '$post_id')";
         $result = $this->queryMysql($query);
 
         if ($result) {
@@ -204,8 +205,8 @@ class DbHandler {
 
     public function getPost($post_id) {
 
-        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.name, u.email, u.phone,
-u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.ID='$post_id'";
+        $query = $this->queryPosts()." WHERE p.ID='$post_id'";
+
         $result = mysql_fetch_object($this->queryMysql($query));
 
         if ($result != null) {
@@ -239,14 +240,14 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
     public function getAllUserPosts($user_id) {
 
-        $query = "SELECT * FROM arzymo_posts WHERE idUser = '$user_id'";
+        $query = "SELECT * FROM posts WHERE idUser = '$user_id'";
         $result = $this->queryMysql($query);
 
         return $result;
     }
     public function getUserPostsByPage($user_id, $page) {
 
-        $query = "SELECT * FROM arzymo_posts WHERE idUser = '$user_id'";
+        $query = $this->queryPosts()." WHERE idUser = '$user_id'";
         //paging
         $num_rec_per_page = NUM_REC_PER_PAGE;
         //$advsQ = queryMysql($query);
@@ -260,14 +261,102 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
         return $result;
     }
 
-    public function updatePostsHitcount($post_id) {
+    public function getUserLikedPostsByPage($user_id, $page) {
 
-        $query = "SELECT * FROM arzymo_posts WHERE ID = '$post_id'";
+        $queryLikes = "SELECT * FROM likes WHERE idUser = '$user_id'";
+
+        $resultLikes = $this->queryMysql($queryLikes);
+        $num = mysql_num_rows($resultLikes);
+
+        $query = $this->queryPosts();
+
+        $result = null;
+
+        if($num > 0)
+        {
+            $first = true;
+            while ($like = mysql_fetch_object($resultLikes))
+            {
+                $id = $like->idPost;
+
+                if($first)
+                {
+                    $query = $query." WHERE p.ID = '$id'";
+                    $first = false;
+                }
+                else $query = $query." OR p.ID = '$id'";
+            }
+            //paging
+            $num_rec_per_page = NUM_REC_PER_PAGE;
+            //$advsQ = queryMysql($query);
+            //$total_records = mysql_num_rows($advsQ);  //count number of records
+            //$total_pages = ceil($total_records / $num_rec_per_page);
+            $start_from = ($page-1) * $num_rec_per_page;
+            $query = $query." LIMIT  $start_from, $num_rec_per_page";
+            //end of paging
+            $result = $this->queryMysql($query);
+        }
+
+            return $result;
+    }
+
+    public function updatePostsHitcount($post_id, $user_id) {
+
+        //hitcount job
+        $query = "SELECT * FROM posts WHERE ID = '$post_id'";
         $post = mysql_fetch_object($this->queryMysql($query));
         $count = $post->hitcount + 1;
 
-        $query_update = "UPDATE arzymo_posts SET hitcount = '$count' WHERE ID = '$post_id'";
+        $query_update = "UPDATE posts SET hitcount = '$count' WHERE ID = '$post_id'";
         $result = $this->queryMysql($query_update);
+        $res = array();
+
+        if ($result)
+        {
+            $res["error"] = false;
+            $res["message"] = "Post's hitcount updated successfully";
+            //like job
+            $query = "SELECT * FROM likes WHERE idUser = '$user_id' AND idPost = '$post_id'";
+
+            if(mysql_num_rows($this->queryMysql($query)) > 0)
+            {
+                $res["like"] = true;
+            }
+            else
+            {
+                $res["like"] = false;
+            }
+        }
+        else
+        {
+            $res["error"] = true;
+            $res["message"] = "Post's hitcount failed to update. Please try again!";
+        }
+
+        return $res;
+    }
+
+    public function updateLikes($post_id, $user_id, $like)
+    {
+        $query = "SELECT * FROM likes WHERE idUser = '$user_id' AND idPost = '$post_id'";
+        $result = false;
+
+        if(mysql_num_rows($this->queryMysql($query)) > 0)
+        {
+            if($like == "0")
+            {
+                $query = "DELETE FROM likes WHERE idUser = '$user_id' AND idPost = '$post_id'";
+                $result = $this->queryMysql($query);
+            }
+        }
+        else
+        {
+            if($like == "1")
+            {
+                $query = "INSERT INTO likes VALUES('$user_id', '$post_id')";
+                $result = $this->queryMysql($query);
+            }
+        }
 
         if ($result) {
             return true;
@@ -276,9 +365,13 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
         }
     }
 
-    public function getPostsByCategory($category_id, $page) {
+    public function getPosts($page, $params) {
 
-        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idCategory='$category_id'";
+        $query = $this->queryPosts();
+
+        //params
+        $query = $this->queryParams($query, $params);
+
         //paging
         $num_rec_per_page = NUM_REC_PER_PAGE;
         //$advsQ = queryMysql($query);
@@ -291,9 +384,31 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
         return $result;
     }
-    public function getPostsBySubCategory($subcategory_id, $page) {
 
-        $query = "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM arzymo_posts AS p LEFT JOIN arzymo_users as u ON p.idUser = u.ID WHERE p.idSubCategory='$subcategory_id'";
+    public function getPostsByCategory($category_id, $page, $params) {
+
+        $query = $this->queryPosts()." WHERE p.idCategory='$category_id'";
+        //params
+        $query = $this->queryParams($query, $params);
+
+        //paging
+        $num_rec_per_page = NUM_REC_PER_PAGE;
+        //$advsQ = queryMysql($query);
+        //$total_records = mysql_num_rows($advsQ);  //count number of records
+        //$total_pages = ceil($total_records / $num_rec_per_page);
+        $start_from = ($page-1) * $num_rec_per_page;
+        $query = $query." LIMIT  $start_from, $num_rec_per_page";
+        //end of paging
+        $result = $this->queryMysql($query);
+
+        return $result;
+    }
+    public function getPostsBySubCategory($subcategory_id, $page, $params) {
+
+        $query = $this->queryPosts()." WHERE p.idSubCategory='$subcategory_id'";
+        //params
+        $query = $this->queryParams($query, $params);
+
         //paging
         $num_rec_per_page = NUM_REC_PER_PAGE;
         $start_from = ($page-1) * $num_rec_per_page;
@@ -306,7 +421,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
     public function getImagesByPost($post_id) {
 
-        $query = "SELECT * FROM arzymo_images WHERE idPost='$post_id'";
+        $query = "SELECT * FROM images WHERE idPost='$post_id'";
         $result = $this->queryMysql($query);
 
         return $result;
@@ -314,28 +429,28 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
     public function getImages() {
 
-        $query = "SELECT * FROM arzymo_images";
+        $query = "SELECT * FROM images";
         $result = $this->queryMysql($query);
 
         return $result;
     }
     public function getImage($image_id) {
 
-        $query = "SELECT * FROM arzymo_images WHERE ID='$image_id'";
+        $query = "SELECT * FROM images WHERE ID='$image_id'";
         $result = $this->queryMysql($query);
 
         return $result;
     }
 
     public function getCategories() {
-        $query = "SELECT * FROM arzymo_category";
+        $query = "SELECT * FROM category";
         $result = $this->queryMysql($query);
 
         return $result;
     }
 
     public function getSubCategories() {
-        $query = "SELECT * FROM arzymo_subcategory";
+        $query = "SELECT * FROM subcategory";
         $result = $this->queryMysql($query);
 
         return $result;
@@ -343,7 +458,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
     public function updatePost($post_id, $title, $content, $price, $pricecurrency, $idCategory, $idSubcategory, $idSubSubcategory)
     {
-        $query = "UPDATE arzymo_posts SET title = '$title', content = '$content', price = '$price', pricecurrency = '$pricecurrency', idCategory = '$idCategory', idSubcategory = '$idSubcategory', idSubSubcategory = '$idSubSubcategory' WHERE ID = '$post_id'";
+        $query = "UPDATE posts SET title = '$title', content = '$content', price = '$price', pricecurrency = '$pricecurrency', idCategory = '$idCategory', idSubcategory = '$idSubcategory', idSubSubcategory = '$idSubSubcategory' WHERE ID = '$post_id'";
         $result = $this->queryMysql($query);
 
         if ($result) {
@@ -355,7 +470,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
     public function deletePost($post_id) {
 
-        $query = "DELETE FROM arzymo_posts WHERE ID = '$post_id'";
+        $query = "DELETE FROM posts WHERE ID = '$post_id'";
         $result = $this->queryMysql($query);
 
         if ($result) {
@@ -367,7 +482,7 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
 
     public function deleteImage($image_id) {
 
-        $query = "DELETE FROM arzymo_images WHERE ID = '$image_id'";
+        $query = "DELETE FROM images WHERE ID = '$image_id'";
         $result = $this->queryMysql($query);
 
         if ($result) {
@@ -378,10 +493,10 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
     }
     public function deleteImagesByPost($post_id) {
 
-        $query = "SELECT * FROM arzymo_images WHERE idPost='$post_id'";
+        $query = "SELECT * FROM images WHERE idPost='$post_id'";
         $result = $this->queryMysql($query);
 
-        $delete_query = "DELETE FROM arzymo_images WHERE idPost = '$post_id'";
+        $delete_query = "DELETE FROM images WHERE idPost = '$post_id'";
         $delete_result = $this->queryMysql($delete_query);
 
         if ($delete_result) {
@@ -483,6 +598,26 @@ u.api_key, u.status as user_status, u.created_at FROM arzymo_posts AS p LEFT JOI
     {
         $result = mysql_query($query) or die(mysql_error());
         return $result;
+    }
+
+    function queryParams($query, $params)
+    {
+        $res = $query;
+        $params = explode(";", $params);
+        $q = $params[0];
+        $actionType = $params[1];
+
+        if($q != "" && $q != "0")
+            $res = $res." WHERE p.title LIKE '%$q%'";
+        if($actionType != "0")
+            $res = $res." AND p.actionType='$actionType'";
+
+        return $res;
+    }
+
+    function queryPosts()
+    {
+        return "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year, p.displayed_name, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM posts AS p LEFT JOIN users as u ON p.idUser = u.ID";
     }
 }
 
