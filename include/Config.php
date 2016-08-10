@@ -18,4 +18,10 @@ define('USER_CREATE_FAILED', 1);
 define('USER_ALREADY_EXISTED', 2);
 define('NUM_REC_PER_PAGE', 25);
 define('MAX_IMAGE_SIZE', 900);
+
+define("GOOGLE_API_KEY", "AIzaSyArDrU3O52DEF0MyLxhjuT8wfuOAiN188o");
+
+// push notification flags
+define('PUSH_FLAG_CHATROOM', 1);
+define('PUSH_FLAG_USER', 2);
 ?>
