@@ -627,7 +627,7 @@ class DbHandler {
     // updating user GCM registration ID
     public function updateGcmID($user_id, $gcm_registration_id) {
         $response = array();
-        $stmt = $this->conn->prepare("UPDATE users SET gcm_registration_id = ? WHERE user_id = ?");
+        $stmt = $this->conn->prepare("UPDATE users SET gcm_registration_id = ? WHERE ID = ?");
         $stmt->bind_param("si", $gcm_registration_id, $user_id);
 
         if ($stmt->execute()) {
@@ -647,7 +647,7 @@ class DbHandler {
 
     // fetching single user by id
     public function getUser($user_id) {
-        $stmt = $this->conn->prepare("SELECT user_id, name, email, gcm_registration_id, created_at FROM users WHERE user_id = ?");
+        $stmt = $this->conn->prepare("SELECT ID, name, email, gcm_registration_id, created_at FROM users WHERE ID = ?");
         $stmt->bind_param("s", $user_id);
         if ($stmt->execute()) {
             // $user = $stmt->get_result()->fetch_assoc();
@@ -671,7 +671,7 @@ class DbHandler {
 
         $users = array();
         if (sizeof($user_ids) > 0) {
-            $query = "SELECT user_id, name, email, gcm_registration_id, created_at FROM users WHERE user_id IN (";
+            $query = "SELECT ID, name, email, gcm_registration_id, created_at FROM users WHERE ID IN (";
 
             foreach ($user_ids as $user_id) {
                 $query .= $user_id . ',';
@@ -686,7 +686,7 @@ class DbHandler {
 
             while ($user = $result->fetch_assoc()) {
                 $tmp = array();
-                $tmp["user_id"] = $user['user_id'];
+                $tmp["user_id"] = $user['ID'];
                 $tmp["name"] = $user['name'];
                 $tmp["email"] = $user['email'];
                 $tmp["gcm_registration_id"] = $user['gcm_registration_id'];
@@ -741,7 +741,7 @@ class DbHandler {
 
     // fetching single chat room by id
     function getChatRoom($chat_room_id) {
-        $stmt = $this->conn->prepare("SELECT cr.chat_room_id, cr.name, cr.created_at as chat_room_created_at, u.name as username, c.* FROM chat_rooms cr LEFT JOIN messages c ON c.chat_room_id = cr.chat_room_id LEFT JOIN users u ON u.user_id = c.user_id WHERE cr.chat_room_id = ?");
+        $stmt = $this->conn->prepare("SELECT cr.chat_room_id, cr.name, cr.created_at as chat_room_created_at, u.name as username, c.* FROM chat_rooms cr LEFT JOIN messages c ON c.chat_room_id = cr.chat_room_id LEFT JOIN users u ON u.ID = c.user_id WHERE cr.chat_room_id = ?");
         $stmt->bind_param("i", $chat_room_id);
         $stmt->execute();
         $tasks = $stmt->get_result();
@@ -755,7 +755,7 @@ class DbHandler {
      * @return boolean
      */
     private function isUserExists($email) {
-        $stmt = $this->conn->prepare("SELECT user_id from users WHERE email = ?");
+        $stmt = $this->conn->prepare("SELECT ID from users WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
