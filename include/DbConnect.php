@@ -14,12 +14,17 @@ class DbConnect {
     function connect() {
         include_once dirname(__FILE__) . '/Config.php';
 
-        $this->conn = mysql_connect(DB_HOST, DB_USERNAME, DB_PASSWORD) or die(mysql_error());
-        mysql_select_db(DB_NAME) or die(mysql_error());
+        // Connecting to mysql database
+        $this->conn = new mysqli(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME);
 
-        mysql_query('SET NAMES utf8');
-        mysql_query('SET CHARACTER SET utf8' );
-        mysql_query('SET COLLATION_CONNECTION="utf8_general_ci"' );
+        // Check for database connection error
+        if (mysqli_connect_errno()) {
+            echo "Failed to connect to MySQL: " . mysqli_connect_error();
+        }
+
+        //mysql_query('SET NAMES utf8');
+        //mysql_query('SET CHARACTER SET utf8' );
+        //mysql_query('SET COLLATION_CONNECTION="utf8_general_ci"' );
 
         // returing connection resource
         return $this->conn;
