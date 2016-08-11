@@ -596,7 +596,7 @@ class DbHandler {
 
     function queryMysql($query)
     {
-        $result = mysql_query($query) or die(mysql_error());
+        $result = mysqli_query($this->conn, $query) or die(mysqli_error($this->conn));
         return $result;
     }
 

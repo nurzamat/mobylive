@@ -635,7 +635,7 @@ $app->get('/categories', function() {
     $result_cat = $db->getCategories();
     $result_subcat = $db->getSubCategories();
     $subcat_arr = array();
-    while ($subcat = mysql_fetch_object($result_subcat))
+    while ($subcat = mysqli_fetch_object($result_subcat))
     {
         $tmp_sub = array();
         $tmp_sub["id"] = $subcat->ID;
@@ -648,7 +648,7 @@ $app->get('/categories', function() {
     $response["categories"] = array();
 
     // looping through result and preparing posts array
-    while ($cat = mysql_fetch_object($result_cat)) {
+    while ($cat = mysqli_fetch_object($result_cat)) {
 
         $subcat_tmp = array();
         $tmp = array();
