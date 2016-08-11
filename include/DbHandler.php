@@ -760,6 +760,8 @@ class DbHandler {
         $stmt->execute();
         $stmt->store_result();
         $num_rows = $stmt->num_rows;
+
+        $stmt->free_result();
         $stmt->close();
         return $num_rows > 0;
     }

@@ -22,9 +22,9 @@ class DbConnect {
             echo "Failed to connect to MySQL: " . mysqli_connect_error();
         }
 
-        //mysql_query('SET NAMES utf8');
-        //mysql_query('SET CHARACTER SET utf8' );
-        //mysql_query('SET COLLATION_CONNECTION="utf8_general_ci"' );
+        mysqli_query($this->conn, 'SET NAMES utf8');
+        mysqli_query($this->conn, 'SET CHARACTER SET utf8' );
+        mysqli_query($this->conn, 'SET COLLATION_CONNECTION="utf8_general_ci"' );
 
         // returing connection resource
         return $this->conn;
