@@ -12,7 +12,7 @@ class Demo {
     private $conn;
 
     function __construct() {
-        require_once dirname(__FILE__) . '../include/DbConnect.php';
+        require_once '../include/DbConnect.php';
         // opening db connection
         $db = new DbConnect();
         $this->conn = $db->connect();
