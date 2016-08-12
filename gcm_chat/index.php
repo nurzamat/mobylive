@@ -32,7 +32,7 @@ $admin_id = $demo->getDemoUser();
                 });
 
                 function getChatroomMessages(id) {
-                    $.getJSON("v1/chat_rooms/" + id, function (data) {
+                    $.getJSON("../v1/chat_rooms/" + id, function (data) {
                         var li = '';
                         $.each(data.messages, function (i, message) {
                             li += '<li class="others"><label class="name">' + message.user.username + '</label><div class="message">' + message.message + '</div><div class="clear"></div></li>';
@@ -242,7 +242,7 @@ $admin_id = $demo->getDemoUser();
                         $users = $demo->getAllUsers();
                         foreach ($users as $key => $user) {
                             ?>
-                            <option value="<?= $user['user_id'] ?>"><?= $user['name'] ?> (<?= $user['email'] ?>)</option>
+                            <option value="<?= $user['ID'] ?>"><?= $user['name'] ?> (<?= $user['email'] ?>)</option>
                             <?php
                         }
                         ?>
@@ -261,7 +261,7 @@ $admin_id = $demo->getDemoUser();
                         <?php
                         foreach ($users as $key => $user) {
                             ?>
-                            <option value="<?= $user['user_id'] ?>"><?= $user['name'] ?> (<?= $user['email'] ?>)</option>
+                            <option value="<?= $user['ID'] ?>"><?= $user['name'] ?> (<?= $user['email'] ?>)</option>
                             <?php
                         }
                         ?>
