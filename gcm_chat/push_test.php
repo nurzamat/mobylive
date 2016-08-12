@@ -43,7 +43,7 @@ $admin_id = $demo->getDemoUser();
                     }
                     $('#loader_test_push').show();
 
-                    $.post("v1/users/push_test",
+                    $.post("../v1/users/push_test",
                             {token: token, message: msg, api_key: apiKey, include_image: include_image},
                     function (data) {
                         if (data.error === false) {

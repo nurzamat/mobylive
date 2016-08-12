@@ -63,7 +63,7 @@ $admin_id = $demo->getDemoUser();
                     $('#send_to_topic_message').val('');
                     $('#loader_topic').show();
 
-                    $.post("v1/chat_rooms/" + $(this).attr('chat_room') + '/message',
+                    $.post("../v1/chat_rooms/" + $(this).attr('chat_room') + '/message',
                             {user_id: user_id, message: msg},
                     function (data) {
                         if (data.error === false) {
@@ -93,7 +93,7 @@ $admin_id = $demo->getDemoUser();
                     $('#send_to_single').val('');
                     $('#loader_single').show();
 
-                    $.post("v1/users/" + to + '/message',
+                    $.post("../v1/users/" + to + '/message',
                             {user_id: user_id, message: msg},
                     function (data) {
                         if (data.error === false) {
@@ -134,7 +134,7 @@ $admin_id = $demo->getDemoUser();
 
                     to = selMulti.join(",");
 
-                    $.post("v1/users/message",
+                    $.post("../v1/users/message",
                             {user_id: user_id, to: to, message: msg},
                     function (data) {
                         if (data.error === false) {
@@ -163,7 +163,7 @@ $admin_id = $demo->getDemoUser();
                     $('#send_to_multiple_with_image').val('');
                     $('#loader_multiple_with_image').show();
 
-                    $.post("v1/users/send_to_all",
+                    $.post("../v1/users/send_to_all",
                             {user_id: user_id, message: msg},
                     function (data) {
                         if (data.error === false) {

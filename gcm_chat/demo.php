@@ -38,7 +38,7 @@ class Demo {
         $name = 'AndroidHive';
         $email = 'admin@androidhive.info';
         
-        $stmt = $this->conn->prepare("SELECT user_id from users WHERE email = ?");
+        $stmt = $this->conn->prepare("SELECT ID from users WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
