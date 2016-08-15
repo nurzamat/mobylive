@@ -620,6 +620,22 @@ class DbHandler {
         return "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year, p.displayed_name, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM posts AS p LEFT JOIN users as u ON p.idUser = u.ID";
     }
 
+    function queryChatsWithPost()
+    {
+        return "SELECT ch.ID as chat_id, ch.idUser1, ch.idUser2, ch.idPost, ch.created_at as chat_created_at,
+                       p.ID as post_id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year, p.displayed_name,
+                       u1.name as name1, u1.username as username1, u1.email as email1, u1.phone as phone1, u1.api_key as api_key1, u1.status as user_status1, u1.created_at as user_created_at1,
+                       u2.name as name2, u2.username as username2, u2.email as email2, u2.phone as phone2, u2.api_key as api_key2, u2.status as user_status2, u2.created_at as user_created_at2
+                       FROM chats AS ch LEFT JOIN posts as p ON ch.idPost = p.ID LEFT JOIN users as u1 ON ch.idUser1 = u1.ID LEFT JOIN users as u2 ON ch.idUser2 = u2.ID";
+    }
+
+    function queryChats()
+    {
+        return "SELECT ch.ID as chat_id, ch.idUser1, ch.idUser2, ch.idPost, ch.created_at as chat_created_at,
+                       u1.name as name1, u1.username as username1, u1.email as email1, u1.phone as phone1, u1.api_key as api_key1, u1.status as user_status1, u1.created_at as user_created_at1,
+                       u2.name as name2, u2.username as username2, u2.email as email2, u2.phone as phone2, u2.api_key as api_key2, u2.status as user_status2, u2.created_at as user_created_at2
+                       FROM chats AS ch LEFT JOIN users as u1 ON ch.idUser1 = u1.ID LEFT JOIN users as u2 ON ch.idUser2 = u2.ID";
+    }
 
     //CHAT
     //
@@ -726,6 +742,212 @@ class DbHandler {
             $response['error'] = true;
             $response['message'] = 'Failed send message ' . $stmt->error;
         }
+
+        return $response;
+    }
+
+    // fetching user chats with post
+    public function getUserChatsWithPost($user_id) {
+
+        $chat_query = $this->queryChatsWithPost()." WHERE idUser1 = ? OR idUser2 = ?";
+
+        $stmt = $this->conn->prepare($chat_query);
+        $stmt->bind_param("ii", $user_id, $user_id);
+        $stmt->execute();
+
+        $result_chats = $stmt->get_result();
+
+        $response = array();
+        $response["error"] = false;
+        $response["chats"] = array();
+
+        $post_ids = array();
+        while ($chat = $result_chats->fetch_assoc()) {
+
+            if($chat['idPost'] != null && $chat['idPost'] > 0)
+            array_push($post_ids, $chat['idPost']);
+
+            $tmp = array();
+            $tmp["chat_id"] = $chat['chat_id'];
+            $tmp["chat_created_at"] = $chat['chat_created_at'];
+
+            if($user_id == $chat['idUser1'])
+            {
+                //собеседник
+                $tmp["interlocutor_id"] = $chat['idUser2'];
+                $tmp["interlocutor_name"] = $chat['name2'];
+                $tmp["interlocutor_username"] = $chat['username2'];
+                $tmp["interlocutor_email"] = $chat['email2'];
+                $tmp["interlocutor_phone"] = $chat['phone2'];
+                $tmp["interlocutor_status"] = $chat['user_status2'];
+            } else {
+                $tmp["interlocutor_id"] = $chat['idUser1'];
+                $tmp["interlocutor_name"] = $chat['name1'];
+                $tmp["interlocutor_username"] = $chat['username1'];
+                $tmp["interlocutor_email"] = $chat['email1'];
+                $tmp["interlocutor_phone"] = $chat['phone1'];
+                $tmp["interlocutor_status"] = $chat['user_status1'];
+            }
+
+            if($chat['post_id'] != null && $chat['post_id'] > 0)
+            {
+                $tmp["post_id"] = $chat['post_id'];
+                $tmp["post_title"] = $chat['title'];
+                $tmp["post_content"] = $chat['content'];
+                $tmp["post_price"] = $chat['price'];
+                $tmp["post_price_currency"] = $chat['pricecurrency'];
+                $tmp["post_created_at"] = $chat['created_at'];
+                $tmp["post_id_category"] = $chat['idCategory'];
+                $tmp["post_id_subcategory"] = $chat['idSubCategory'];
+                $tmp["post_status"] = $chat['post_status'];
+                $tmp["post_hitcount"] = $chat['hitcount'];
+                $tmp["post_city"] = $chat['city'];
+                $tmp["post_country"] = $chat['country'];
+                $tmp["post_sex"] = $chat['sex'];
+                $tmp["post_birth_year"] = $chat['birth_year'];
+                $tmp["post_displayed_name"] = $chat['displayed_name'];
+                $tmp["post_images"] = array();
+            }
+
+            array_push($response["chats"], $tmp);
+        }
+
+        if (count($post_ids) > 0)
+        {
+            $query = "SELECT * FROM images WHERE idPost IN (";
+
+            foreach ($post_ids as $post_id) {
+                $query .= $post_id . ',';
+            }
+
+            $query = substr($query, 0, strlen($query) - 1);
+            $query .= ')';
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            $result_images = $stmt->get_result();
+
+            $images_arr = array();
+
+            while ($image = $result_images->fetch_assoc()) {
+                $tmp_sub = array();
+                $tmp_sub["id"] = $image['ID'];
+                $tmp_sub["original_image"] = $image['name'];;
+                $tmp_sub["idPost"] = $image['idPost'];;
+                array_push($images_arr, $tmp_sub);
+            }
+
+            for ($i = 0; $i < count($response["chats"]); $i++)
+            {
+                $images_tmp = array();
+
+                for ($j = 0; $j < count($images_arr); $j++)
+                {
+                    if($images_arr[$j]["idPost"] == $response["chats"][$i]["post_id"])
+                    {
+                        array_push($images_tmp, $images_arr[$j]);
+                    }
+                }
+
+                $response["chats"][$i]["post_images"] = $images_tmp;
+            }
+        }
+
+        $stmt->close();
+
+        return $response;
+    }
+
+    // fetching user chats without post
+    public function getUserChats($user_id) {
+
+        $chat_query = $this->queryChats()." WHERE idUser1 = ? OR idUser2 = ?";
+
+        $stmt = $this->conn->prepare($chat_query);
+        $stmt->bind_param("ii", $user_id, $user_id);
+        $stmt->execute();
+
+        $result_chats = $stmt->get_result();
+
+        $response = array();
+        $response["error"] = false;
+        $response["chats"] = array();
+
+        $post_ids = array();
+        while ($chat = $result_chats->fetch_assoc()) {
+            if($chat['idPost'] != null && $chat['idPost'] > 0)
+            array_push($post_ids, $chat['idPost']);
+
+            $tmp = array();
+            $tmp["chat_id"] = $chat['chat_id'];
+            $tmp["chat_created_at"] = $chat['chat_created_at'];
+            $tmp["post_id"] = $chat['idPost'];
+            $tmp["post_images"] = array();
+
+            if($user_id == $chat['idUser1'])
+            {
+                //собеседник
+                $tmp["interlocutor_id"] = $chat['idUser2'];
+                $tmp["interlocutor_name"] = $chat['name2'];
+                $tmp["interlocutor_username"] = $chat['username2'];
+                $tmp["interlocutor_email"] = $chat['email2'];
+                $tmp["interlocutor_phone"] = $chat['phone2'];
+                $tmp["interlocutor_status"] = $chat['user_status2'];
+            } else {
+                $tmp["interlocutor_id"] = $chat['idUser1'];
+                $tmp["interlocutor_name"] = $chat['name1'];
+                $tmp["interlocutor_username"] = $chat['username1'];
+                $tmp["interlocutor_email"] = $chat['email1'];
+                $tmp["interlocutor_phone"] = $chat['phone1'];
+                $tmp["interlocutor_status"] = $chat['user_status1'];
+            }
+
+            array_push($response["chats"], $tmp);
+        }
+
+        if (count($post_ids) > 0)
+        {
+            $query = "SELECT * FROM images WHERE idPost IN (";
+
+            foreach ($post_ids as $post_id) {
+                $query .= $post_id . ',';
+            }
+
+            $query = substr($query, 0, strlen($query) - 1);
+            $query .= ')';
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            $result_images = $stmt->get_result();
+
+            $images_arr = array();
+
+            while ($image = $result_images->fetch_assoc()) {
+                $tmp_sub = array();
+                $tmp_sub["id"] = $image['ID'];
+                $tmp_sub["original_image"] = $image['name'];;
+                $tmp_sub["idPost"] = $image['idPost'];;
+                array_push($images_arr, $tmp_sub);
+            }
+
+            for ($i = 0; $i < count($response["chats"]); $i++)
+            {
+                $images_tmp = array();
+
+                for ($j = 0; $j < count($images_arr); $j++)
+                {
+                    if($images_arr[$j]["idPost"] == $response["chats"][$i]["post_id"])
+                    {
+                        array_push($images_tmp, $images_arr[$j]);
+                    }
+                }
+
+                $response["chats"][$i]["post_images"] = $images_tmp;
+            }
+        }
+
+
+        $stmt->close();
 
         return $response;
     }

@@ -893,6 +893,19 @@ $app->get('/chat_rooms', function() {
     echoRespnse(200, $response);
 });
 
+/* * *
+ * fetching user chats //nur1
+ */
+$app->get('/users/:id/chats', function($user_id) {
+
+    $db = new DbHandler();
+    // fetching all user chats
+    //$response = $db->getUserChatsWithPost($user_id);
+    $response = $db->getUserChats($user_id);
+
+    echoRespnse(200, $response);
+});
+
 /**
  * Messaging in a chat room
  * Will send push notification using Topic Messaging
@@ -922,7 +935,7 @@ $app->post('/chat_rooms/:id/message', function($chat_room_id) {
         $data['message'] = $response['message'];
         $data['chat_room_id'] = $chat_room_id;
 
-        $push->setTitle("Google Cloud Messaging");
+        $push->setTitle("Arzymo");
         $push->setIsBackground(FALSE);
         $push->setFlag(PUSH_FLAG_CHATROOM);
         $push->setData($data);
