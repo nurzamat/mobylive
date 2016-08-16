@@ -971,6 +971,55 @@ class DbHandler {
         return $tasks;
     }
 
+    function getChatMessages($chat_id) {
+
+        $stmt = $this->conn->prepare("SELECT ch.ID as main_chat_id, ch.created_at as chat_created_at, u.name, u.username, c.* FROM chats ch LEFT JOIN messages c ON c.chat_id = ch.ID LEFT JOIN users u ON u.ID = c.user_id WHERE ch.ID = ?");
+        $stmt->bind_param("i", $chat_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $stmt->close();
+        return $result;
+    }
+
+    function getChatMessagesByIds($user_id, $interlocutor_id, $post_id) {
+
+        $stmt = $this->conn->prepare("SELECT ID FROM chats WHERE (idUser1 = ? OR idUser1 = ?) AND (idUser2 = ? OR idUser2 = ?) AND idPost = ?");
+        $stmt->bind_param("iiiii", $user_id, $interlocutor_id, $user_id, $interlocutor_id, $post_id);
+        $stmt->execute();
+
+        $num_of_rows = 0;
+
+        $stmt->bind_result($chat_id);
+
+        while ($stmt->fetch()) {
+            $num_of_rows++;
+        }
+
+        $result = null;
+
+        if($num_of_rows > 0)
+        {
+            $stmt = $this->conn->prepare("SELECT ch.ID as main_chat_id, ch.created_at as chat_created_at, u.name, u.username, c.* FROM chats ch LEFT JOIN messages c ON c.chat_id = ch.ID LEFT JOIN users u ON u.ID = c.user_id WHERE ch.ID = '$chat_id'");
+            $stmt->execute();
+            $result = $stmt->get_result();
+        }
+        else
+        {
+            $stmt = $this->conn->prepare("INSERT INTO chats(idUser1, idUser2, idPost) values(?, ?, ?)");
+            $stmt->bind_param("iii", $interlocutor_id, $user_id, $post_id);
+            $stmt->execute();
+            $new_chat_id = $this->conn->insert_id;
+
+            $stmt = $this->conn->prepare("SELECT ch.ID as main_chat_id, ch.created_at as chat_created_at, u.name as username, c.* FROM chats ch LEFT JOIN messages c ON c.chat_id = ch.ID LEFT JOIN users u ON u.ID = c.user_id WHERE ch.ID = '$new_chat_id'");
+            $stmt->execute();
+            $result = $stmt->get_result();
+        }
+
+        $stmt->close();
+        return $result;
+    }
+
     /**
      * Checking for duplicate user by email address
      * @param String $email email to check in db

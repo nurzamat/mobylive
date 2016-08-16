@@ -1219,6 +1219,59 @@ $app->get('/chat_rooms/:id', function($chat_room_id) {
     echoRespnse(200, $response);
 });
 
+
+/**
+ * Fetching private chat messages
+ *  */
+$app->get('/chats/:id/:user_id/:interlocutor_id/:post_id', function($chat_id, $user_id, $interlocutor_id, $post_id) {
+    global $app;
+    $db = new DbHandler();
+    $result = null;
+    if($chat_id != 0)
+    {
+        $result = $db->getChatMessages($chat_id);
+    }
+    else
+    {
+        $result = $db->getChatMessagesByIds($user_id, $interlocutor_id, $post_id);
+    }
+
+    $response["error"] = false;
+    $response["messages"] = array();
+    $response['chat'] = array();
+
+    $i = 0;
+    // looping through result and preparing tasks array
+    while ($chat = $result->fetch_assoc()) {
+        // adding chat node
+        if ($i == 0) {
+            $tmp = array();
+            $tmp["chat_id"] = $chat["main_chat_id"];
+            $tmp["created_at"] = $chat["chat_created_at"];
+            $response['chat'] = $tmp;
+        }
+        $i++;
+
+        if ($chat['user_id'] != NULL) {
+            // message node
+            $cmt = array();
+            $cmt["message"] = $chat["message"];
+            $cmt["message_id"] = $chat["message_id"];
+            $cmt["created_at"] = $chat["created_at"];
+
+            // user node
+            $user = array();
+            $user['user_id'] = $chat['user_id'];
+            $user['username'] = $chat['username'];
+            $cmt['user'] = $user;
+
+            array_push($response["messages"], $cmt);
+        }
+    }
+
+    echoRespnse(200, $response);
+});
+
 /**
  * Verifying required params posted or not
  */
