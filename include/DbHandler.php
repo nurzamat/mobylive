@@ -663,15 +663,16 @@ class DbHandler {
 
     // fetching single user by id
     public function getUser($user_id) {
-        $stmt = $this->conn->prepare("SELECT ID, name, email, gcm_registration_id, created_at FROM users WHERE ID = ?");
-        $stmt->bind_param("s", $user_id);
+        $stmt = $this->conn->prepare("SELECT ID, name, username, email, gcm_registration_id, created_at FROM users WHERE ID = ?");
+        $stmt->bind_param("i", $user_id);
         if ($stmt->execute()) {
             // $user = $stmt->get_result()->fetch_assoc();
-            $stmt->bind_result($user_id, $name, $email, $gcm_registration_id, $created_at);
+            $stmt->bind_result($user_id, $name, $username, $email, $gcm_registration_id, $created_at);
             $stmt->fetch();
             $user = array();
             $user["user_id"] = $user_id;
             $user["name"] = $name;
+            $user["username"] = $username;
             $user["email"] = $email;
             $user["gcm_registration_id"] = $gcm_registration_id;
             $user["created_at"] = $created_at;
@@ -682,12 +683,50 @@ class DbHandler {
         }
     }
 
+    public function getToUser($chat_id, $from_user_id) {
+
+        $stmt = $this->conn->prepare("SELECT idUser1, idUser2 FROM chats WHERE ID = ?");
+        $stmt->bind_param("i", $chat_id);
+        if($stmt->execute())
+        {
+            $stmt->bind_result($idUser1, $idUser2);
+            $stmt->fetch();
+            $user_id = $idUser1;
+            if($from_user_id == $idUser1)
+            {
+                $user_id = $idUser2;
+            }
+
+            $stmt = $this->conn->prepare("SELECT ID, name, username, email, gcm_registration_id, created_at FROM users WHERE ID = ?");
+            $stmt->bind_param("i", $user_id);
+            if ($stmt->execute()) {
+                // $user = $stmt->get_result()->fetch_assoc();
+                $stmt->bind_result($user_id, $name, $username, $email, $gcm_registration_id, $created_at);
+                $stmt->fetch();
+                $user = array();
+                $user["user_id"] = $user_id;
+                $user["name"] = $name;
+                $user["username"] = $username;
+                $user["email"] = $email;
+                $user["gcm_registration_id"] = $gcm_registration_id;
+                $user["created_at"] = $created_at;
+                $stmt->close();
+                return $user;
+            } else {
+                return NULL;
+            }
+
+        } else {
+            return NULL;
+        }
+    }
+
     // fetching multiple users by ids
     public function getUsers($user_ids) {
 
         $users = array();
         if (sizeof($user_ids) > 0) {
-            $query = "SELECT ID, name, email, gcm_registration_id, created_at FROM users WHERE ID IN (";
+            $query = "SELECT ID, name, username, email, gcm_registration_id, created_at FROM users WHERE ID IN (";
 
             foreach ($user_ids as $user_id) {
                 $query .= $user_id . ',';
@@ -704,6 +743,7 @@ class DbHandler {
                 $tmp = array();
                 $tmp["user_id"] = $user['ID'];
                 $tmp["name"] = $user['name'];
+                $tmp["username"] = $user['username'];
                 $tmp["email"] = $user['email'];
                 $tmp["gcm_registration_id"] = $user['gcm_registration_id'];
                 $tmp["created_at"] = $user['created_at'];
@@ -734,6 +774,36 @@ class DbHandler {
                 $tmp = array();
                 $tmp['message_id'] = $message_id;
                 $tmp['chat_room_id'] = $chat_room_id;
+                $tmp['message'] = $message;
+                $tmp['created_at'] = $created_at;
+                $response['message'] = $tmp;
+            }
+        } else {
+            $response['error'] = true;
+            $response['message'] = 'Failed send message ' . $stmt->error;
+        }
+
+        return $response;
+    }
+
+    public function addChatMessage($user_id, $chat_id, $message) {
+        $response = array();
+
+        $stmt = $this->conn->prepare("INSERT INTO messages (chat_id, user_id, message) values(?, ?, ?)");
+        $stmt->bind_param("iis", $chat_id, $user_id, $message);
+
+        if ($result = $stmt->execute()) {
+            $response['error'] = false;
+
+            // get the message
+            $message_id = $this->conn->insert_id;
+            $stmt = $this->conn->prepare("SELECT message_id, user_id, chat_id, message, created_at FROM messages WHERE message_id = '$message_id'");
+            if ($stmt->execute()) {
+                $stmt->bind_result($message_id, $user_id, $chat_id, $message, $created_at);
+                $stmt->fetch();
+                $tmp = array();
+                $tmp['message_id'] = $message_id;
+                $tmp['chat_id'] = $chat_id;
                 $tmp['message'] = $message;
                 $tmp['created_at'] = $created_at;
                 $response['message'] = $tmp;

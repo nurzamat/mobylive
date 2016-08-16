@@ -951,6 +951,55 @@ $app->post('/chat_rooms/:id/message', function($chat_room_id) {
     echoRespnse(200, $response);
 });
 
+/**
+ * Messaging in a chat 1 to 1
+ *  */
+$app->post('/chats/:id/message', function($chat_id) {
+    global $app;
+    $db = new DbHandler();
+
+    verifyRequiredParams(array('user_id', 'message'));
+
+    $user_id = $app->request->post('user_id');
+    $message = $app->request->post('message');
+
+    $response = $db->addChatMessage($user_id, $chat_id, $message);
+
+    if ($response['error'] == false) {
+        require_once '../libs/gcm/gcm.php';
+        require_once '../libs/gcm/push.php';
+        $gcm = new GCM();
+        $push = new Push();
+
+        $fromuser = $db->getUser($user_id);
+        $user = $db->getToUser($chat_id, $user_id);
+
+        $msg = array();
+        $msg['message'] = $response['message'];
+        $msg['message_id'] = $response['message_id'];
+        $msg['chat_id'] = $response['chat_id'];
+        $msg['created_at'] = $response['created_at'];
+
+        $data = array();
+        $data['user'] = $fromuser;
+        $data['message'] = $msg;
+        $data['image'] = '';
+
+        $push->setTitle("Arzymo");
+        $push->setIsBackground(FALSE);
+        $push->setFlag(PUSH_FLAG_USER);
+        $push->setData($data);
+
+        // sending push message to single user
+        $gcm->send($user['gcm_registration_id'], $push->getPush());
+
+        $response['user'] = $user;
+        $response['error'] = false;
+    }
+
+    echoRespnse(200, $response);
+});
+
 
 /**
  * Sending push notification to a single user
