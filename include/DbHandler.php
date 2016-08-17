@@ -696,11 +696,10 @@ class DbHandler {
             {
                 $user_id = $idUser2;
             }
-
-            $stmt = $this->conn->prepare("SELECT ID, name, username, email, gcm_registration_id, created_at FROM users WHERE ID = ?");
-            $stmt->bind_param("i", $user_id);
-            if ($stmt->execute()) {
-                // $user = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            $stmt = $this->conn->prepare("SELECT ID, name, username, email, gcm_registration_id, created_at FROM users WHERE ID = '$user_id'");
+            if ($stmt->execute())
+            {
                 $stmt->bind_result($user_id, $name, $username, $email, $gcm_registration_id, $created_at);
                 $stmt->fetch();
                 $user = array();
@@ -797,9 +796,9 @@ class DbHandler {
 
             // get the message
             $message_id = $this->conn->insert_id;
-            $stmt = $this->conn->prepare("SELECT message_id, user_id, chat_id, message, created_at FROM messages WHERE message_id = '$message_id'");
+            $stmt = $this->conn->prepare("SELECT user_id, chat_id, message, created_at FROM messages WHERE message_id = '$message_id'");
             if ($stmt->execute()) {
-                $stmt->bind_result($message_id, $user_id, $chat_id, $message, $created_at);
+                $stmt->bind_result($user_id, $chat_id, $message, $created_at);
                 $stmt->fetch();
                 $tmp = array();
                 $tmp['message_id'] = $message_id;
@@ -808,11 +807,15 @@ class DbHandler {
                 $tmp['created_at'] = $created_at;
                 $response['message'] = $tmp;
             }
+            else{
+                $response['error'] = true;
+            }
         } else {
             $response['error'] = true;
             $response['message'] = 'Failed send message ' . $stmt->error;
         }
 
+        $stmt->close();
         return $response;
     }
 

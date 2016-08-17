@@ -974,15 +974,9 @@ $app->post('/chats/:id/message', function($chat_id) {
         $fromuser = $db->getUser($user_id);
         $user = $db->getToUser($chat_id, $user_id);
 
-        $msg = array();
-        $msg['message'] = $response['message'];
-        $msg['message_id'] = $response['message_id'];
-        $msg['chat_id'] = $response['chat_id'];
-        $msg['created_at'] = $response['created_at'];
-
         $data = array();
         $data['user'] = $fromuser;
-        $data['message'] = $msg;
+        $data['message'] = $response['message'];
         $data['image'] = '';
 
         $push->setTitle("Arzymo");
