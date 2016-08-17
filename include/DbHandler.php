@@ -744,8 +744,8 @@ class DbHandler {
                 $tmp["name"] = $user['name'];
                 $tmp["username"] = $user['username'];
                 $tmp["email"] = $user['email'];
-                $tmp["gcm_registration_id"] = $user['gcm_registration_id'];
-                $tmp["created_at"] = $user['created_at'];
+                //$tmp["gcm_registration_id"] = $user['gcm_registration_id'];
+                //$tmp["created_at"] = $user['created_at'];
                 array_push($users, $tmp);
             }
         }
