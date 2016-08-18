@@ -28,7 +28,7 @@ class DbHandler {
             // insert query
             $query = "INSERT INTO users VALUES(NULL, '', '$username', '$email', '', '$password_hash', '$api_key', 1, now(), '')";
             $result = $this->queryMysql($query);
-            $id = mysql_insert_id();
+            $id = mysqli_insert_id($this->conn);
 
             // Check for successful insertion
             if ($result) {
@@ -181,7 +181,7 @@ class DbHandler {
 
         if ($result) {
             // post row created
-            $new_post_id = mysql_insert_id();
+            $new_post_id = mysqli_insert_id($this->conn);
             return $new_post_id;
         } else {
             // post failed to create
@@ -195,7 +195,7 @@ class DbHandler {
 
         if ($result) {
             // post row created
-            $image_id = mysql_insert_id();
+            $image_id = mysqli_insert_id($this->conn);
             return $image_id;
         } else {
             // post failed to create
