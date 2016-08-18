@@ -64,7 +64,7 @@ class DbHandler {
         if (mysql_num_rows($this->queryMysql($query)) > 0) {
             // Found user with the email
             // Now verify the password
-            $pass = mysql_fetch_object($this->queryMysql($query));
+            $pass = mysqli_fetch_object($this->queryMysql($query));
             $pass = substr($pass->password_hash, 0, 29);
             $password_hash = substr(PassHash::hash($password), 0, 29);
 
@@ -106,7 +106,7 @@ class DbHandler {
         if (mysql_num_rows($this->queryMysql($query)) > 0) {
             // Found user with the email
             // Now verify the password
-            $q = mysql_fetch_object($this->queryMysql($query));
+            $q = mysqli_fetch_object($this->queryMysql($query));
             $user = array();
             $user["name"] = $q->name;
             $user["email"] = $q->email;
@@ -139,7 +139,7 @@ class DbHandler {
         $num_rows = mysql_num_rows($this->queryMysql($query));
         if ($num_rows > 0) {
             // TODO
-            $user_id = mysql_fetch_object($this->queryMysql($query))->id;
+            $user_id = mysqli_fetch_object($this->queryMysql($query))->id;
             return $user_id;
         } else {
             return NULL;
@@ -256,9 +256,11 @@ class DbHandler {
         $start_from = ($page-1) * $num_rec_per_page;
         $query = $query." LIMIT  $start_from, $num_rec_per_page";
         //end of paging
-        $result = $this->queryMysql($query);
+        $result_posts = $this->queryMysql($query);
+        //response
+        $response = $this->ResultPosts($result_posts);
 
-        return $result;
+        return $response;
     }
 
     public function getUserLikedPostsByPage($user_id, $page) {
@@ -266,18 +268,18 @@ class DbHandler {
         $queryLikes = "SELECT * FROM likes WHERE idUser = '$user_id'";
 
         $resultLikes = $this->queryMysql($queryLikes);
-        $num = mysql_num_rows($resultLikes);
+        $num = mysqli_num_rows($resultLikes);
 
         $query = $this->queryPosts();
 
-        $result = null;
+        $result_posts = null;
 
         if($num > 0)
         {
             $first = true;
-            while ($like = mysql_fetch_object($resultLikes))
+            while ($like = mysqli_fetch_assoc($resultLikes))
             {
-                $id = $like->idPost;
+                $id = $like['idPost'];
 
                 if($first)
                 {
@@ -294,17 +296,21 @@ class DbHandler {
             $start_from = ($page-1) * $num_rec_per_page;
             $query = $query." LIMIT  $start_from, $num_rec_per_page";
             //end of paging
-            $result = $this->queryMysql($query);
+            $result_posts = $this->queryMysql($query);
+            //response
+            $response = $this->ResultPosts($result_posts);
+
+            return $response;
         }
 
-            return $result;
+            return null;;
     }
 
     public function updatePostsHitcount($post_id, $user_id) {
 
         //hitcount job
         $query = "SELECT * FROM posts WHERE ID = '$post_id'";
-        $post = mysql_fetch_object($this->queryMysql($query));
+        $post = mysqli_fetch_object($this->queryMysql($query));
         $count = $post->hitcount + 1;
 
         $query_update = "UPDATE posts SET hitcount = '$count' WHERE ID = '$post_id'";
@@ -380,9 +386,11 @@ class DbHandler {
         $start_from = ($page-1) * $num_rec_per_page;
         $query = $query." LIMIT  $start_from, $num_rec_per_page";
         //end of paging
-        $result = $this->queryMysql($query);
+        $result_posts = $this->queryMysql($query);
+        //response
+        $response = $this->ResultPosts($result_posts);
 
-        return $result;
+        return $response;
     }
 
     public function getPostsByCategory($category_id, $page, $params) {
@@ -399,9 +407,11 @@ class DbHandler {
         $start_from = ($page-1) * $num_rec_per_page;
         $query = $query." LIMIT  $start_from, $num_rec_per_page";
         //end of paging
-        $result = $this->queryMysql($query);
+        $result_posts = $this->queryMysql($query);
+        //response
+        $response = $this->ResultPosts($result_posts);
 
-        return $result;
+        return $response;
     }
     public function getPostsBySubCategory($subcategory_id, $page, $params) {
 
@@ -414,9 +424,12 @@ class DbHandler {
         $start_from = ($page-1) * $num_rec_per_page;
         $query = $query." LIMIT  $start_from, $num_rec_per_page";
         //end of paging
-        $result = $this->queryMysql($query);
+        $result_posts = $this->queryMysql($query);
 
-        return $result;
+        //response
+        $response = $this->ResultPosts($result_posts);
+
+        return $response;
     }
 
     public function getImagesByPost($post_id) {
@@ -427,13 +440,22 @@ class DbHandler {
         return $result;
     }
 
-    public function getImages() {
+    public function getImages($post_ids) {
 
-        $query = "SELECT * FROM images";
+        $query = "SELECT * FROM images WHERE idPost IN (";
+
+        foreach ($post_ids as $post_id) {
+            $query .= $post_id . ',';
+        }
+
+        $query = substr($query, 0, strlen($query) - 1);
+        $query .= ')';
+
         $result = $this->queryMysql($query);
 
         return $result;
     }
+
     public function getImage($image_id) {
 
         $query = "SELECT * FROM images WHERE ID='$image_id'";
@@ -744,8 +766,8 @@ class DbHandler {
                 $tmp["name"] = $user['name'];
                 $tmp["username"] = $user['username'];
                 $tmp["email"] = $user['email'];
-                //$tmp["gcm_registration_id"] = $user['gcm_registration_id'];
-                //$tmp["created_at"] = $user['created_at'];
+                $tmp["gcm_registration_id"] = $user['gcm_registration_id'];
+                $tmp["created_at"] = $user['created_at'];
                 array_push($users, $tmp);
             }
         }
@@ -1091,6 +1113,78 @@ class DbHandler {
 
         $stmt->close();
         return $result;
+    }
+
+    /**
+     * @param $result_posts
+     * @return array
+     */
+    public function ResultPosts($result_posts)
+    {
+        $response = array();
+        $response["error"] = false;
+        $response["posts"] = array();
+
+        $post_ids = array();
+        // looping through result and preparing posts array
+        while ($post = mysqli_fetch_assoc($result_posts)) {
+            array_push($post_ids, $post['id']);
+
+            $tmp = array();
+            $tmp["id"] = $post['id'];
+            $tmp["title"] = $post['title'];
+            $tmp["content"] = $post['content'];
+            $tmp["price"] = $post['price'];
+            $tmp["price_currency"] = $post['pricecurrency'];
+            $tmp["created_at"] = $post['created_at'];
+            $tmp["id_category"] = $post['idCategory'];
+            $tmp["id_subcategory"] = $post['idSubCategory'];
+            $tmp["post_status"] = $post['post_status'];
+            $tmp["hitcount"] = $post['hitcount'];
+            $tmp["city"] = $post['city'];
+            $tmp["country"] = $post['country'];
+            $tmp["sex"] = $post['sex'];
+            $tmp["birth_year"] = $post['birth_year'];
+            $tmp["displayed_name"] = $post['displayed_name'];
+            $tmp["user_id"] = $post['user_id'];
+            $tmp["user_name"] = $post['name'];
+            $tmp["user_username"] = $post['username'];
+            $tmp["user_email"] = $post['email'];
+            $tmp["user_phone"] = $post['phone'];
+            $tmp["user_status"] = $post['user_status'];
+            $tmp["images"] = array();
+
+            array_push($response["posts"], $tmp);
+        }
+
+        if (count($post_ids) > 0) {
+            $result_images = $this->getImages($post_ids);
+
+            $images_arr = array();
+
+            while ($image = $result_images->fetch_assoc()) {
+                $tmp_sub = array();
+                $tmp_sub["id"] = $image['ID'];
+                $tmp_sub["original_image"] = $image['name'];;
+                $tmp_sub["idPost"] = $image['idPost'];;
+                array_push($images_arr, $tmp_sub);
+            }
+
+            for ($i = 0; $i < count($response["posts"]); $i++) {
+                $images_tmp = array();
+
+                for ($j = 0; $j < count($images_arr); $j++) {
+                    if ($images_arr[$j]["idPost"] == $response["posts"][$i]["id"]) {
+                        array_push($images_tmp, $images_arr[$j]);
+                    }
+                }
+
+                $response["posts"][$i]["images"] = $images_tmp;
+            }
+
+        }
+
+        return $response;
     }
 
     /**

@@ -223,10 +223,7 @@ $app->get('/posts/user/:id/:page', function($user_id, $page) {
     $db = new DbHandler();
 
     // fetching all user posts
-    $result_posts = $db->getUserPostsByPage($user_id, $page);
-    $result_images = $db->getImages();
-
-    $response = getPosts($result_posts, $result_images);
+    $response = $db->getUserPostsByPage($user_id, $page);
 
     echoRespnse(200, $response);
 });
@@ -240,16 +237,14 @@ $app->get('/posts/user/:id/likes/:page', function($user_id, $page) {
     $db = new DbHandler();
 
     $response = array();
-    $response["error"] = false;
+    $response["error"] = true;
     $response["posts"] = array();
 
     $result_posts = $db->getUserLikedPostsByPage($user_id, $page);
-    $result_images = $db->getImages();
 
     if($result_posts != null)
-    $response = getPosts($result_posts, $result_images);
-
-    echoRespnse(200, $response);
+    echoRespnse(200, $result_posts);
+    else echoRespnse(200, $response);
 });
 
 /**
@@ -261,11 +256,7 @@ $app->get('/posts/:page/:params', function($page, $params) {
 
     $db = new DbHandler();
 
-    // fetching all category posts
-    $result_posts = $db->getPosts($page, sanitizeString($params));
-    $result_images = $db->getImages();
-
-    $response = getPosts($result_posts, $result_images);
+    $response = $db->getPosts($page, sanitizeString($params));
 
     echoRespnse(200, $response);
 });
@@ -278,11 +269,7 @@ $app->get('/posts/category/:id/:page/:params', function($category_id, $page, $pa
 
     $db = new DbHandler();
 
-    // fetching all category posts
-    $result_posts = $db->getPostsByCategory($category_id, $page, sanitizeString($params));
-    $result_images = $db->getImages();
-
-    $response = getPosts($result_posts, $result_images);
+    $response = $db->getPostsByCategory($category_id, $page, sanitizeString($params));
 
     echoRespnse(200, $response);
 });
@@ -297,10 +284,7 @@ $app->get('/posts/subcategory/:id/:page/:params', function($subcategory_id, $pag
     $db = new DbHandler();
 
     // fetching subcategory posts
-    $result_posts = $db->getPostsBySubCategory($subcategory_id, $page, sanitizeString($params));
-    $result_images = $db->getImages();
-
-    $response = getPosts($result_posts, $result_images);
+    $response = $db->getPostsBySubCategory($subcategory_id, $page, sanitizeString($params));
 
     echoRespnse(200, $response);
 });
@@ -756,75 +740,6 @@ function sanitizeString($var)
     return $var;
 }
 
-
-function getPosts($result_posts, $result_images)
-{
-    $response = array();
-
-    $images_arr = array();
-
-    $response["error"] = false;
-    $response["posts"] = array();
-
-    try
-    {
-        while ($image = mysql_fetch_object($result_images))
-        {
-            $tmp_sub = array();
-            $tmp_sub["id"] = $image->ID;
-            $tmp_sub["original_image"] = $image->name;
-            $tmp_sub["idPost"] = $image->idPost;
-            array_push($images_arr, $tmp_sub);
-        }
-
-        // looping through result and preparing posts array
-        while ($post = mysql_fetch_object($result_posts))
-        {
-            $tmp = array();
-            $images_tmp = array();
-
-            for ($i = 0; $i < count($images_arr); $i++)
-            {
-                if($images_arr[$i]["idPost"] == $post->id)
-                {
-                    array_push($images_tmp, $images_arr[$i]);
-                }
-            }
-
-            $tmp["id"] = $post->id;
-            $tmp["title"] = $post->title;
-            $tmp["content"] = $post->content;
-            $tmp["price"] = $post->price;
-            $tmp["price_currency"] = $post->pricecurrency;
-            $tmp["created_at"] = $post->created_at;
-            $tmp["id_category"] = $post->idCategory;
-            $tmp["id_subcategory"] = $post->idSubCategory;
-            $tmp["post_status"] = $post->post_status;
-            $tmp["hitcount"] = $post->hitcount;
-            $tmp["city"] = $post->city;
-            $tmp["country"] = $post->country;
-            $tmp["sex"] = $post->sex;
-            $tmp["birth_year"] = $post->birth_year;
-            $tmp["displayed_name"] = $post->displayed_name;
-            $tmp["user_id"] = $post->user_id;
-            $tmp["user_name"] = $post->name;
-            $tmp["user_username"] = $post->username;
-            $tmp["user_email"] = $post->email;
-            $tmp["user_phone"] = $post->phone;
-            $tmp["user_status"] = $post->user_status;
-            $tmp["images"] = $images_tmp;
-
-            array_push($response["posts"], $tmp);
-        }
-    }
-    catch (Exception $e) {
-        // Exception occurred. Make error flag true
-        $response['error'] = true;
-        $response['message'] = $e->getMessage();
-    }
-
-    return $response;
-}
 
 
 ///////////////////////////////////////////////////
