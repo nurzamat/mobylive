@@ -61,7 +61,7 @@ class DbHandler {
         // fetching user by email
         $query = "SELECT * FROM users WHERE email='$email'";
 
-        if (mysql_num_rows($this->queryMysql($query)) > 0) {
+        if (mysqli_num_rows($this->queryMysql($query)) > 0) {
             // Found user with the email
             // Now verify the password
             $pass = mysqli_fetch_object($this->queryMysql($query));
@@ -90,7 +90,7 @@ class DbHandler {
     private function isUserExistsByEmail($email)
     {
         $query = "SELECT id from users WHERE email = '$email'";
-        $num_rows = mysql_num_rows($this->queryMysql($query));
+        $num_rows = mysqli_num_rows($this->queryMysql($query));
         if($num_rows > 0)
             return true;
         else return false;
@@ -103,7 +103,7 @@ class DbHandler {
     public function getUserByEmail($email) {
         $query = "SELECT * FROM users WHERE email='$email'";
 
-        if (mysql_num_rows($this->queryMysql($query)) > 0) {
+        if (mysqli_num_rows($this->queryMysql($query)) > 0) {
             // Found user with the email
             // Now verify the password
             $q = mysqli_fetch_object($this->queryMysql($query));
@@ -136,7 +136,7 @@ class DbHandler {
      */
     public function getUserId($api_key) {
         $query = "SELECT id from users WHERE api_key = '$api_key'";
-        $num_rows = mysql_num_rows($this->queryMysql($query));
+        $num_rows = mysqli_num_rows($this->queryMysql($query));
         if ($num_rows > 0) {
             // TODO
             $user_id = mysqli_fetch_object($this->queryMysql($query))->id;
@@ -154,7 +154,7 @@ class DbHandler {
      */
     public function isValidApiKey($api_key) {
         $query = "SELECT id from users WHERE api_key = '$api_key'";
-        $num_rows = mysql_num_rows($this->queryMysql($query));
+        $num_rows = mysqli_num_rows($this->queryMysql($query));
         if($num_rows > 0)
             return true;
         else return false;
@@ -310,8 +310,8 @@ class DbHandler {
 
         //hitcount job
         $query = "SELECT * FROM posts WHERE ID = '$post_id'";
-        $post = mysqli_fetch_object($this->queryMysql($query));
-        $count = $post->hitcount + 1;
+        $post = mysqli_fetch_assoc($this->queryMysql($query));
+        $count = $post['hitcount'] + 1;
 
         $query_update = "UPDATE posts SET hitcount = '$count' WHERE ID = '$post_id'";
         $result = $this->queryMysql($query_update);
@@ -324,7 +324,7 @@ class DbHandler {
             //like job
             $query = "SELECT * FROM likes WHERE idUser = '$user_id' AND idPost = '$post_id'";
 
-            if(mysql_num_rows($this->queryMysql($query)) > 0)
+            if(mysqli_num_rows($this->queryMysql($query)) > 0)
             {
                 $res["like"] = true;
             }
@@ -347,7 +347,7 @@ class DbHandler {
         $query = "SELECT * FROM likes WHERE idUser = '$user_id' AND idPost = '$post_id'";
         $result = false;
 
-        if(mysql_num_rows($this->queryMysql($query)) > 0)
+        if(mysqli_num_rows($this->queryMysql($query)) > 0)
         {
             if($like == "0")
             {
