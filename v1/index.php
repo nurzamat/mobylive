@@ -739,7 +739,24 @@ function sanitizeString($var)
     */
     return $var;
 }
+//profile edit
+$app->post('/user/profile', function() use ($app) {
 
+    // reading post params
+    $user_id = $app->request->post('user_id');
+    $name = $app->request->post('name');
+    $email = $app->request->post('email');
+    $phone = $app->request->post('phone');
+
+    // validating email address
+    validateEmail($email);
+
+    $db = new DbHandler();
+    $response = $db->updateProfile($user_id, $name, $email, $phone);
+
+    // echo json response
+    echoRespnse(200, $response);
+});
 
 
 ///////////////////////////////////////////////////

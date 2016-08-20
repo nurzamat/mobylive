@@ -51,6 +51,26 @@ class DbHandler {
         return $response;
     }
 
+    public function updateProfile($user_id, $name, $email, $phone) {
+        $response = array();
+
+        $query_update = "UPDATE users SET name = '$name', email = '$email', phone = '$phone' WHERE ID = '$user_id'";
+        $result = $this->queryMysql($query_update);
+
+        if ($result)
+        {
+            $response["error"] = false;
+            $response["message"] = "Profile updated successfully";
+        }
+        else
+        {
+            $response["error"] = true;
+            $response["message"] = "Profile failed to update. Please try again!";
+        }
+
+        return $response;
+    }
+
     /**
      * Checking user login
      * @param String $email User login email id
