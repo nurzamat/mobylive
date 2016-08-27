@@ -313,23 +313,22 @@ $app->post('/posts', 'authenticate', function() use ($app) {
     $body = json_decode($req->getBody());
     // reading post params
 
+    $idCategory = $body->idCategory;
+    $idSubcategory = $body->idSubcategory;
+    $idSubSubcategory = 0;
     $title = $body->title;
     $content = $body->content;
     $price = $body->price;
     $price_currency = $body->price_currency;
-    $idCategory = $body->idCategory;
-    $idSubcategory = $body->idSubcategory;
-    $idSubSubcategory = 0;
-    $city = $body->city;
-    $country = $body->country;
     $actionType = $body->actionType;
     $sex = $body->sex;
     $birth_year = $body->birth_year;
-    $displayed_name = $body->displayed_name;
-
+    $phone = $body->phone;
+    $region = $body->region;
+    $location = $body->location;
     $db = new DbHandler();
     // creating new task
-    $post_id = $db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $city, $country, $actionType, $sex, $birth_year, $displayed_name);
+    $post_id = $db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $actionType, $sex, $birth_year, $phone, $region, $location);
 
     if ($post_id != NULL) {
         $response["error"] = false;

@@ -169,6 +169,29 @@ class DbHandler {
     }
 
     /**
+     * @param $region
+     * @param $location
+     * @return array
+     */
+    public function getIdLocation($region, $location)
+    {
+        $idLocation = 0;
+        $result = $this->queryMysql("SELECT * FROM regions WHERE name = '$region'");
+        if (mysqli_num_rows($result) > 0)
+        {
+            $r = mysqli_fetch_assoc($result);
+            $idRegion = $r['ID'];
+            $result = $this->queryMysql("SELECT * FROM locations WHERE name = '$location' AND idRegion = '$idRegion'");
+
+            if (mysqli_num_rows($result) > 0) {
+                $r = mysqli_fetch_assoc($result);
+                $idLocation = $r['ID'];
+            }
+        }
+        return $idLocation;
+    }
+
+    /**
      * Checking for duplicate user by email address
      * @param String $email email to check in db
      * @return boolean
@@ -303,10 +326,12 @@ class DbHandler {
      * @param String $user_id user id to whom task belongs to
      * @param String $task task text
      */
-    public function createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $city, $country, $actionType, $sex, $birth_year, $displayed_name)
+    public function createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $actionType, $sex, $birth_year, $phone, $region, $location)
     {
+        $idLocation = $this->getIdLocation($region, $location);
 
-        $query = "INSERT INTO posts VALUES(NULL, '$title', '$content', '$price', '$price_currency', now(), 0, now(), '$idCategory', '$idSubcategory', '$idSubSubcategory', 0, '$city', '$country', '$user_id', '$actionType', '$sex', '$birth_year', '$displayed_name')";
+        $query = "INSERT INTO posts VALUES(NULL, '$title', '$content', '$price', '$price_currency', now(), 0, now(), '$idCategory', '$idSubcategory', '$idSubSubcategory', 0, '$user_id', '$actionType', '$sex', '$birth_year', '$idLocation', '$phone')";
+
         $result = $this->queryMysql($query);
 
         if ($result) {
@@ -681,13 +706,13 @@ class DbHandler {
 
     function queryPosts()
     {
-        return "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year, p.displayed_name, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM posts AS p LEFT JOIN users as u ON p.idUser = u.ID";
+        return "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM posts AS p LEFT JOIN users as u ON p.idUser = u.ID";
     }
 
     function queryChatsWithPost()
     {
         return "SELECT ch.ID as chat_id, ch.idUser1, ch.idUser2, ch.idPost, ch.created_at as chat_created_at,
-                       p.ID as post_id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year, p.displayed_name,
+                       p.ID as post_id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year,
                        u1.name as name1, u1.username as username1, u1.email as email1, u1.phone as phone1, u1.api_key as api_key1, u1.status as user_status1, u1.created_at as user_created_at1,
                        u2.name as name2, u2.username as username2, u2.email as email2, u2.phone as phone2, u2.api_key as api_key2, u2.status as user_status2, u2.created_at as user_created_at2
                        FROM chats AS ch LEFT JOIN posts as p ON ch.idPost = p.ID LEFT JOIN users as u1 ON ch.idUser1 = u1.ID LEFT JOIN users as u2 ON ch.idUser2 = u2.ID";
@@ -948,7 +973,6 @@ class DbHandler {
                 $tmp["post_country"] = $chat['country'];
                 $tmp["post_sex"] = $chat['sex'];
                 $tmp["post_birth_year"] = $chat['birth_year'];
-                $tmp["post_displayed_name"] = $chat['displayed_name'];
                 $tmp["post_images"] = array();
             }
 
@@ -1193,7 +1217,6 @@ class DbHandler {
             $tmp["country"] = $post['country'];
             $tmp["sex"] = $post['sex'];
             $tmp["birth_year"] = $post['birth_year'];
-            $tmp["displayed_name"] = $post['displayed_name'];
             $tmp["user_id"] = $post['user_id'];
             $tmp["user_name"] = $post['name'];
             $tmp["user_username"] = $post['username'];
