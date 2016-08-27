@@ -18,15 +18,14 @@ class DbHandler {
         $response = array();
 
         // First check if user already existed in db
-        if (!$this->isUserExistsByEmail($email)) {
+        if (!$this->isUserExistsByUsername($username)) {
             // Generating password hash
             $password_hash = PassHash::hash($password);
 
             // Generating API key
             $api_key = $this->generateApiKey();
-
             // insert query
-            $query = "INSERT INTO users VALUES(NULL, '', '$username', '$email', '', '$password_hash', '$api_key', 1, now(), '')";
+            $query = "INSERT INTO users VALUES(NULL, '', '$username', '$email', '', '$password_hash', '$api_key', 1, now(), '', '')";
             $result = $this->queryMysql($query);
             $id = mysqli_insert_id($this->conn);
 
@@ -34,11 +33,18 @@ class DbHandler {
             if ($result) {
                 // User successfully inserted
                 $response["id"] = $id;
+                $response["name"] = "";
                 $response["username"] = $username;
                 $response["email"] = $email;
+                $response["phone"] = "";
                 $response["password"] = $password;
                 $response["api_key"] = $api_key;
+                $response["status"] = "1";
+                $response["created_at"] = "";
+                $response['gcm_registration_id'] = "";
+                $response['image_name'] = "";
                 $response["message"] = USER_CREATED_SUCCESSFULLY;
+
             } else {
                 // Failed to create user
                 $response["message"] = USER_CREATE_FAILED;
@@ -71,6 +77,21 @@ class DbHandler {
         return $response;
     }
 
+    public function updateProfileImage($user_id, $name) {
+
+        $query = "SELECT * FROM users WHERE ID = '$user_id'";
+        $result = $this->queryMysql($query);
+
+        $upd_query = "UPDATE users SET image_name = '$name' WHERE ID = '$user_id'";
+        $upd_result = $this->queryMysql($upd_query);
+
+        if ($upd_result) {
+            return $result;
+        } else {
+            return NULL;
+        }
+    }
+
     /**
      * Checking user login
      * @param String $email User login email id
@@ -80,11 +101,12 @@ class DbHandler {
     public function checkLoginByEmail($email, $password) {
         // fetching user by email
         $query = "SELECT * FROM users WHERE email='$email'";
+        $result = $this->queryMysql($query);
 
-        if (mysqli_num_rows($this->queryMysql($query)) > 0) {
+        if (mysqli_num_rows($result) > 0) {
             // Found user with the email
             // Now verify the password
-            $pass = mysqli_fetch_object($this->queryMysql($query));
+            $pass = mysqli_fetch_object($result);
             $pass = substr($pass->password_hash, 0, 29);
             $password_hash = substr(PassHash::hash($password), 0, 29);
 
@@ -101,6 +123,50 @@ class DbHandler {
             return FALSE;
         }
     }
+    /**
+     * Checking user login by username
+     */
+    public function checkLoginByUsername($username, $password)
+    {
+        require_once 'PassHash.php';
+        // fetching user by email
+        $query = "SELECT * FROM users WHERE username='$username'";
+        $result = $this->queryMysql($query);
+        $response = array();
+
+        if (mysqli_num_rows($result) > 0) {
+            // Found user with the email
+            // Now verify the password
+            $q = mysqli_fetch_assoc($result);
+            $pass = substr($q['password_hash'], 0, 29);
+            $password_hash = substr(PassHash::hash($password), 0, 29);
+
+            if ($pass == $password_hash) {
+                // User password is correct
+                $response["error"] = false;
+                $response['id'] = $q['ID'];
+                $response['name'] = $q['name'];
+                $response['username'] = $q['username'];
+                $response['email'] = $q['email'];
+                $response['phone'] = $q['phone'];
+                $response['api_key'] = $q['api_key'];
+                $response['created_at'] = $q['created_at'];
+                $response['gcm_registration_id'] = $q['gcm_registration_id'];
+                $response['image_name'] = $q['image_name'];
+            } else
+            {
+                // user credentials are wrong
+                $response['error'] = true;
+                $response['message'] = 'Login failed. Incorrect credentials '.$username."/".$password;
+            }
+
+        } else {
+            $response['error'] = true;
+            $response['message'] = "An error occurred. Please try again";
+        }
+
+        return $response;
+    }
 
     /**
      * Checking for duplicate user by email address
@@ -109,7 +175,20 @@ class DbHandler {
      */
     private function isUserExistsByEmail($email)
     {
-        $query = "SELECT id from users WHERE email = '$email'";
+        $query = "SELECT ID from users WHERE email = '$email'";
+        $num_rows = mysqli_num_rows($this->queryMysql($query));
+        if($num_rows > 0)
+            return true;
+        else return false;
+    }
+    /**
+     * Checking for duplicate user by username
+     * @param String $username username to check in db
+     * @return boolean
+     */
+    private function isUserExistsByUsername($username)
+    {
+        $query = "SELECT ID from users WHERE username = '$username'";
         $num_rows = mysqli_num_rows($this->queryMysql($query));
         if($num_rows > 0)
             return true;
@@ -122,18 +201,49 @@ class DbHandler {
      */
     public function getUserByEmail($email) {
         $query = "SELECT * FROM users WHERE email='$email'";
-
-        if (mysqli_num_rows($this->queryMysql($query)) > 0) {
+        $result = $this->queryMysql($query);
+        if (mysqli_num_rows($result) > 0) {
             // Found user with the email
             // Now verify the password
-            $q = mysqli_fetch_object($this->queryMysql($query));
+            $q = mysqli_fetch_assoc($result);
             $user = array();
-            $user["name"] = $q->name;
-            $user["email"] = $q->email;
-            $user["phone"] = $q->phone;
-            $user["api_key"] = $q->api_key;
-            $user["status"] = $q->status;
-            $user["created_at"] = $q->created_at;
+            $user["name"] = $q['name'];
+            $user["username"] = $q['username'];
+            $user["email"] = $q['email'];
+            $user["phone"] = $q['phone'];
+            $user["api_key"] = $q['api_key'];
+            $user["status"] = $q['status'];
+            $user["created_at"] = $q['created_at'];
+            $user['gcm_registration_id'] = $q['gcm_registration_id'];
+            $user['image_name'] = $q['image_name'];
+            return $user;
+
+        } else {
+            // user not existed with the email
+            return NULL;
+        }
+    }
+    /**
+     * Fetching user by username
+     * @param String $username
+     */
+    public function getUserByUsername($username) {
+        $query = "SELECT * FROM users WHERE username='$username'";
+        $result = $this->queryMysql($query);
+        if (mysqli_num_rows($result) > 0) {
+            // Found user with the email
+            // Now verify the password
+            $q = mysqli_fetch_assoc($result);
+            $user = array();
+            $user["name"] = $q['name'];
+            $user["username"] = $q['username'];
+            $user["email"] = $q['email'];
+            $user["phone"] = $q['phone'];
+            $user["api_key"] = $q['api_key'];
+            $user["status"] = $q['status'];
+            $user["created_at"] = $q['created_at'];
+            $user['gcm_registration_id'] = $q['gcm_registration_id'];
+            $user['image_name'] = $q['image_name'];
             return $user;
 
         } else {
@@ -156,10 +266,10 @@ class DbHandler {
      */
     public function getUserId($api_key) {
         $query = "SELECT id from users WHERE api_key = '$api_key'";
-        $num_rows = mysqli_num_rows($this->queryMysql($query));
-        if ($num_rows > 0) {
-            // TODO
-            $user_id = mysqli_fetch_object($this->queryMysql($query))->id;
+        $result = $this->queryMysql($query);
+        if (mysqli_num_rows($result) > 0)
+        {
+            $user_id = mysqli_fetch_object($result)->id;
             return $user_id;
         } else {
             return NULL;
@@ -227,7 +337,7 @@ class DbHandler {
 
         $query = $this->queryPosts()." WHERE p.ID='$post_id'";
 
-        $result = mysql_fetch_object($this->queryMysql($query));
+        $result = mysqli_fetch_object($this->queryMysql($query));
 
         if ($result != null) {
             $res = array();
@@ -548,94 +658,6 @@ class DbHandler {
         }
     }
 
-    /* ------------- `tasks` table method ------------------ */
-
-    /*
-    public function createTask($user_id, $task) {
-        $stmt = $this->conn->prepare("INSERT INTO tasks(task) VALUES(?)");
-        $stmt->bind_param("s", $task);
-        $result = $stmt->execute();
-        $stmt->close();
-
-        if ($result) {
-            // task row created
-            // now assign the task to user
-            $new_task_id = $this->conn->insert_id;
-            $res = $this->createUserTask($user_id, $new_task_id);
-            if ($res) {
-                // task created successfully
-                return $new_task_id;
-            } else {
-                // task failed to create
-                return NULL;
-            }
-        } else {
-            // task failed to create
-            return NULL;
-        }
-    }
-
-    public function getTask($task_id, $user_id) {
-        $stmt = $this->conn->prepare("SELECT t.id, t.task, t.status, t.created_at from tasks t, user_tasks ut WHERE t.id = ? AND ut.task_id = t.id AND ut.user_id = ?");
-        $stmt->bind_param("ii", $task_id, $user_id);
-        if ($stmt->execute()) {
-            $res = array();
-            $stmt->bind_result($id, $task, $status, $created_at);
-            // TODO
-            // $task = $stmt->get_result()->fetch_assoc();
-            $stmt->fetch();
-            $res["id"] = $id;
-            $res["task"] = $task;
-            $res["status"] = $status;
-            $res["created_at"] = $created_at;
-            $stmt->close();
-            return $res;
-        } else {
-            return NULL;
-        }
-    }
-
-    public function getAllUserTasks($user_id) {
-        $stmt = $this->conn->prepare("SELECT t.* FROM tasks t, user_tasks ut WHERE t.id = ut.task_id AND ut.user_id = ?");
-        $stmt->bind_param("i", $user_id);
-        $stmt->execute();
-        $tasks = $stmt->get_result();
-        $stmt->close();
-        return $tasks;
-    }
-
-    public function updateTask($user_id, $task_id, $task, $status) {
-        $stmt = $this->conn->prepare("UPDATE tasks t, user_tasks ut set t.task = ?, t.status = ? WHERE t.id = ? AND t.id = ut.task_id AND ut.user_id = ?");
-        $stmt->bind_param("siii", $task, $status, $task_id, $user_id);
-        $stmt->execute();
-        $num_affected_rows = $stmt->affected_rows;
-        $stmt->close();
-        return $num_affected_rows > 0;
-    }
-
-    public function deleteTask($user_id, $task_id) {
-        $stmt = $this->conn->prepare("DELETE t FROM tasks t, user_tasks ut WHERE t.id = ? AND ut.task_id = t.id AND ut.user_id = ?");
-        $stmt->bind_param("ii", $task_id, $user_id);
-        $stmt->execute();
-        $num_affected_rows = $stmt->affected_rows;
-        $stmt->close();
-        return $num_affected_rows > 0;
-    }
-
-    public function createUserTask($user_id, $task_id) {
-        $stmt = $this->conn->prepare("INSERT INTO user_tasks(user_id, task_id) values(?, ?)");
-        $stmt->bind_param("ii", $user_id, $task_id);
-        $result = $stmt->execute();
-
-        if (false === $result) {
-            die('execute() failed: ' . htmlspecialchars($stmt->error));
-        }
-        $stmt->close();
-        return $result;
-    }
-
-    */
-
     function queryMysql($query)
     {
         $result = mysqli_query($this->conn, $query) or die(mysqli_error($this->conn));
@@ -704,23 +726,29 @@ class DbHandler {
     }
 
     // fetching single user by id
-    public function getUser($user_id) {
-        $stmt = $this->conn->prepare("SELECT ID, name, username, email, gcm_registration_id, created_at FROM users WHERE ID = ?");
-        $stmt->bind_param("i", $user_id);
-        if ($stmt->execute()) {
-            // $user = $stmt->get_result()->fetch_assoc();
-            $stmt->bind_result($user_id, $name, $username, $email, $gcm_registration_id, $created_at);
-            $stmt->fetch();
+    public function getUser($user_id)
+    {
+        $query = "SELECT * FROM users WHERE ID='$user_id'";
+        $result = $this->queryMysql($query);
+        if (mysqli_num_rows($result) > 0) {
+            // Found user with the email
+            // Now verify the password
+            $q = mysqli_fetch_assoc($result);
             $user = array();
-            $user["user_id"] = $user_id;
-            $user["name"] = $name;
-            $user["username"] = $username;
-            $user["email"] = $email;
-            $user["gcm_registration_id"] = $gcm_registration_id;
-            $user["created_at"] = $created_at;
-            $stmt->close();
+            $user['id'] = $q['ID'];
+            $user["name"] = $q['name'];
+            $user["username"] = $q['username'];
+            $user["email"] = $q['email'];
+            $user["phone"] = $q['phone'];
+            $user["api_key"] = $q['api_key'];
+            $user["status"] = $q['status'];
+            $user["created_at"] = $q['created_at'];
+            $user['gcm_registration_id'] = $q['gcm_registration_id'];
+            $user['image_name'] = $q['image_name'];
             return $user;
+
         } else {
+            // user not existed with the email
             return NULL;
         }
     }

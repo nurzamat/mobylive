@@ -58,21 +58,22 @@ function authenticate(\Slim\Route $route) {
  * params - name, email, password
  */
 $app->post('/register', function() use ($app) {
+
     // check for required params
     //verifyRequiredParams(array('name', 'email', 'phone', 'password'));
 
     $req = $app->request();
     $body = json_decode($req->getBody());
-    // reading post params
-    /*
-    $name = $app->request()->post('name');
-    $email = $app->request()->post('email');
-    $phone = $app->request()->post('phone');
-    $password = $app->request()->post('password');
-    */
+
     $username = $body->username;
     $email = $body->email;
     $password = $body->password;
+    // reading post params
+    /*
+    $username = $app->request->post('username');
+    $email = $app->request->post('email');
+    $password = $app->request->post('password');
+    */
 
     // validating email address
     validateEmail($email);
@@ -89,7 +90,7 @@ $app->post('/register', function() use ($app) {
         $response["message"] = "Oops! An error occurred while registering";
     } else if ($response["message"] == USER_ALREADY_EXISTED) {
         $response["error"] = true;
-        $response["message"] = "Sorry, this email already existed";
+        $response["message"] = "Sorry, this username already existed";
     }
     // echo json response
     echoRespnse(201, $response);
@@ -99,44 +100,23 @@ $app->post('/register', function() use ($app) {
  * User Login
  * url - /login
  * method - POST
- * params - email, password
+ * params - username, password
  */
 $app->post('/login', function() use ($app) {
     // check for required params
     //verifyRequiredParams(array('email', 'password'));
+  /*
+    $username = $app->request->post('email');
+    $password = $app->request->post('password');
+  */
+
     $req = $app->request();
     $body = json_decode($req->getBody());
-    // reading post params
-    $email = $body->email;
+    $username = $body->email;
     $password = $body->password;
-    //$email = $app->request()->post('email');
-    //$password = $app->request()->post('password');
-    $response = array();
 
     $db = new DbHandler();
-    // check for correct email and password
-    if ($db->checkLoginByEmail($email, $password)) {
-        // get the user by email
-        $user = $db->getUserByEmail($email);
-
-        if ($user != NULL) {
-            $response["error"] = false;
-            $response['name'] = $user['name'];
-            $response['email'] = $user['email'];
-            $response['phone'] = $user['phone'];
-            $response['apiKey'] = $user['api_key'];
-            $response['created_at'] = $user['created_at'];
-        } else {
-            // unknown error occurred
-            $response['error'] = true;
-            $response['message'] = "An error occurred. Please try again";
-        }
-    } else {
-        // user credentials are wrong
-        $response['error'] = true;
-        //$response['message'] = 'Login failed. Incorrect credentials';
-        $response['message'] = 'Login failed. Incorrect credentials';
-    }
+    $response = $db->checkLoginByUsername($username, $password);
 
     echoRespnse(200, $response);
 });
@@ -389,57 +369,7 @@ $app->post('/posts/:id/images', 'authenticate', function($post_id) use($app) {
             }
             else
             {
-                $typeok = TRUE;
-                $filename = stripslashes($_FILES['image']['name']);
-                $extension = getExtension($filename);
-
-                if ($extension == "jpg" || $extension == "jpeg")
-                {
-                    $src = imagecreatefromjpeg($saveto);
-                }
-                else if ($extension == "gif" )
-                {
-                    $src = imagecreatefromgif($saveto);
-                }
-                else if ($extension == "png" )
-                {
-                    $src = imagecreatefrompng($saveto);
-                }
-                else $typeok = FALSE;
-
-                if ($typeok)
-                {
-                    list($w, $h) = getimagesize($saveto);
-                    $max = MAX_IMAGE_SIZE;
-                    $tw  = $w;
-                    $th  = $h;
-
-                    if ($w > $h && $max < $w)
-                    {
-                        $th = $max / $w * $h;
-                        $tw = $max;
-                    }
-                    elseif ($h > $w && $max < $h)
-                    {
-                        $tw = $max / $h * $w;
-                        $th = $max;
-                    }
-                    elseif ($max < $w)
-                    {
-                        $tw = $th = $max;
-                    }
-
-                    $tmp = imagecreatetruecolor($tw, $th);
-                    imagecopyresampled($tmp, $src, 0, 0, 0, 0, $tw, $th, $w, $h);
-                    imageconvolution($tmp, array( // Sharpen image
-                        array(-1, -1, -1),
-                        array(-1, 16, -1),
-                        array(-1, -1, -1)
-                    ), 8, 0);
-                    imagejpeg($tmp, $saveto);
-                    imagedestroy($tmp);
-                    imagedestroy($src);
-                }
+                ImageWork($saveto);
                 //write to db
                 $db = new DbHandler();
                 $image_id = $db->createImage($post_id, $name);
@@ -450,6 +380,69 @@ $app->post('/posts/:id/images', 'authenticate', function($post_id) use($app) {
                     $response['image_id'] = $image_id;
                     //$response['file_path'] = $saveto;
                     //$response['image'] = basename($_FILES['image']['name']);
+                }
+                else
+                {
+                    $response["error"] = true;
+                    $response["message"] = "Failed to create image in db. Please try again";
+                }
+            }
+        } catch (Exception $e) {
+            // Exception occurred. Make error flag true
+            $response['error'] = true;
+            $response['message'] = $e->getMessage();
+        }
+    } else {
+        // File parameter is missing
+        $response['error'] = true;
+        $response['message'] = 'Not received any file!F';
+    }
+
+    echo json_encode($response);
+});
+
+/**
+ * Sending profile image
+ * method POST
+ * url - /users/:id/profile/image
+ */
+$app->post('/users/:id/profile/image', 'authenticate', function($user_id) use($app) {
+    // check for required params
+    //verifyRequiredParams(array('post'));
+    global $user_id;
+
+    $response = array();
+
+    if (isset($_FILES['image']['name']) && $_FILES["image"]["size"] < 5000000)
+    {
+        $name = uniqid('img-'.date('Ymd').'-').".jpg";
+        $saveto = "../media/profile/"."$name";
+
+        try {
+            // Throws exception incase file is not being moved
+            if (!move_uploaded_file($_FILES['image']['tmp_name'], $saveto)) {
+                // make error flag true
+                $response['error'] = true;
+                $response['message'] = 'Could not move the file!';
+            }
+            else
+            {
+                ImageWork($saveto);
+                //write to db
+                $db = new DbHandler();
+                $result = $db->updateProfileImage($user_id, $name);
+                if($result != null)
+                {
+                    $old_image = mysqli_fetch_assoc($result);
+                    //deleting old image
+                    $target = "../media/profile/".$old_image['image_name'];
+                    if (file_exists($target)) {
+                        unlink($target); // Delete now
+                    }
+                    //end
+                    $response['message'] = 'File uploaded successfully!';
+                    $response['image_name'] = $name;
+                    $response['error'] = false;
                 }
                 else
                 {
@@ -522,9 +515,9 @@ $app->delete('/posts/:id', 'authenticate', function($post_id) use($app) {
     if ($result) {
         //deleting images
         $result_images = $db->deleteImagesByPost($post_id);
-        while ($image = mysql_fetch_object($result_images))
+        while ($image = mysqli_fetch_assoc($result_images))
         {
-            $target = "../media/".$image->name;
+            $target = "../media/".$image['name'];
             if (file_exists($target))
             {
                 unlink($target);
@@ -551,9 +544,9 @@ $app->delete('/images/:id', 'authenticate', function($image_id) use($app) {
 
     $db = new DbHandler();
     $image_result = $db->getImage($image_id);
-    $image = mysql_fetch_object($image_result);
+    $image = mysqli_fetch_assoc($image_result);
 
-    $target = "../media/".$image->name;
+    $target = "../media/".$image['name'];
     $result = false;
     if (file_exists($target)) {
         unlink($target); // Delete now
@@ -610,7 +603,7 @@ $app->get('/users/:id', 'authenticate', function($post_id) {
  * method GET
  * url /categories
  */
-$app->get('/categories', function() {
+$app->get('/categories/user/:id', function($user_id) {
 
     $response = array();
     $db = new DbHandler();
@@ -618,6 +611,12 @@ $app->get('/categories', function() {
     // fetching all user posts
     $result_cat = $db->getCategories();
     $result_subcat = $db->getSubCategories();
+
+    $user = null;
+    if($user_id != 0)
+    {
+        $user = $db->getUser($user_id);
+    }
     $subcat_arr = array();
     while ($subcat = mysqli_fetch_object($result_subcat))
     {
@@ -630,6 +629,15 @@ $app->get('/categories', function() {
 
     $response["error"] = false;
     $response["categories"] = array();
+
+    if($user != null)
+    $response["user"] = $user;
+    else
+    {
+        $user_tmp = array();
+        $user_tmp["helper"] = 0;
+        $response["user"] = $user_tmp;
+    }
 
     // looping through result and preparing posts array
     while ($cat = mysqli_fetch_object($result_cat)) {
@@ -762,27 +770,6 @@ $app->post('/user/profile', function() use ($app) {
 ///////////////////////////////////////////////////
 //START CHAT
 ///////////////////////////////////////////////////
-// User login
-$app->post('/user/login', function() use ($app) {
-    // check for required params
-    verifyRequiredParams(array('name', 'email', 'password'));
-
-    // reading post params
-    $name = $app->request->post('name');
-    $email = $app->request->post('email');
-    $password = $app->request->post('password');
-
-    // validating email address
-    validateEmail($email);
-
-    $db = new DbHandler();
-    $response = $db->createUser($name, $email, $password);
-
-    // echo json response
-    echoRespnse(200, $response);
-});
-
-
 /* * *
  * Updating user
  *  we use this url to update user's gcm registration id
@@ -1283,6 +1270,53 @@ function verifyRequiredParams($required_fields) {
 
 function IsNullOrEmptyString($str) {
     return (!isset($str) || trim($str) === '');
+}
+
+
+/**
+ * @param $saveto
+ */
+function ImageWork($saveto)
+{
+    $typeok = TRUE;
+    $filename = stripslashes($_FILES['image']['name']);
+    $extension = getExtension($filename);
+
+    if ($extension == "jpg" || $extension == "jpeg") {
+        $src = imagecreatefromjpeg($saveto);
+    } else if ($extension == "gif") {
+        $src = imagecreatefromgif($saveto);
+    } else if ($extension == "png") {
+        $src = imagecreatefrompng($saveto);
+    } else $typeok = FALSE;
+
+    if ($typeok) {
+        list($w, $h) = getimagesize($saveto);
+        $max = MAX_IMAGE_SIZE;
+        $tw = $w;
+        $th = $h;
+
+        if ($w > $h && $max < $w) {
+            $th = $max / $w * $h;
+            $tw = $max;
+        } elseif ($h > $w && $max < $h) {
+            $tw = $max / $h * $w;
+            $th = $max;
+        } elseif ($max < $w) {
+            $tw = $th = $max;
+        }
+
+        $tmp = imagecreatetruecolor($tw, $th);
+        imagecopyresampled($tmp, $src, 0, 0, 0, 0, $tw, $th, $w, $h);
+        imageconvolution($tmp, array( // Sharpen image
+            array(-1, -1, -1),
+            array(-1, 16, -1),
+            array(-1, -1, -1)
+        ), 8, 0);
+        imagejpeg($tmp, $saveto);
+        imagedestroy($tmp);
+        imagedestroy($src);
+    }
 }
 
 ///////////////////////////////////////////////////
