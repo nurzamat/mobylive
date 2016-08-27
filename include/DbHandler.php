@@ -378,8 +378,8 @@ class DbHandler {
             $res["idSubCategory"] = $result->idSubCategory;
             $res["idSubSubCategory"] = $result->idSubSubCategory;
             $res["hitcount"] = $result->hitcount;
-            $res["city"] = $result->city;
-            $res["country"] = $result->country;
+            $res["phone"] = $result->post_phone;
+            $res["location"] = $result->location;
             $res["idUser"] = $result->idUser;
             $res["name"] = $result->name;
             $res["email"] = $result->email;
@@ -706,23 +706,24 @@ class DbHandler {
 
     function queryPosts()
     {
-        return "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year, u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at FROM posts AS p LEFT JOIN users as u ON p.idUser = u.ID";
+        return "SELECT p.ID as id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.idUser, p.actionType, p.sex, p.birth_year, p.phone as post_phone, p.idLocation, loc.name as location,
+                       u.ID as user_id, u.name, u.username, u.email, u.phone, u.api_key, u.status as user_status, u.created_at as user_created_at, u.image_name as user_image_name FROM posts AS p LEFT JOIN users as u ON p.idUser = u.ID LEFT JOIN locations as loc ON p.idLocation = loc.ID";
     }
 
     function queryChatsWithPost()
     {
         return "SELECT ch.ID as chat_id, ch.idUser1, ch.idUser2, ch.idPost, ch.created_at as chat_created_at,
-                       p.ID as post_id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.city, p.country, p.idUser, p.actionType, p.sex, p.birth_year,
-                       u1.name as name1, u1.username as username1, u1.email as email1, u1.phone as phone1, u1.api_key as api_key1, u1.status as user_status1, u1.created_at as user_created_at1,
-                       u2.name as name2, u2.username as username2, u2.email as email2, u2.phone as phone2, u2.api_key as api_key2, u2.status as user_status2, u2.created_at as user_created_at2
-                       FROM chats AS ch LEFT JOIN posts as p ON ch.idPost = p.ID LEFT JOIN users as u1 ON ch.idUser1 = u1.ID LEFT JOIN users as u2 ON ch.idUser2 = u2.ID";
+                       p.ID as post_id, p.title, p.content, p.price, p.pricecurrency, p.created_at, p.status as post_status, p.statusChangeDate, p.idCategory, p.idSubCategory, p.idSubSubCategory, p.hitcount, p.idUser, p.actionType, p.sex, p.birth_year, p.phone as post_phone, p.idLocation, loc.name as location,
+                       u1.name as name1, u1.username as username1, u1.email as email1, u1.phone as phone1, u1.api_key as api_key1, u1.status as user_status1, u1.created_at as user_created_at1, u1.image_name as user_image_name1,
+                       u2.name as name2, u2.username as username2, u2.email as email2, u2.phone as phone2, u2.api_key as api_key2, u2.status as user_status2, u2.created_at as user_created_at2, u2.image_name as user_image_name2
+                       FROM chats AS ch LEFT JOIN posts as p ON ch.idPost = p.ID LEFT JOIN users as u1 ON ch.idUser1 = u1.ID LEFT JOIN users as u2 ON ch.idUser2 = u2.ID LEFT JOIN locations as loc ON p.idLocation = loc.ID";
     }
 
     function queryChats()
     {
         return "SELECT ch.ID as chat_id, ch.idUser1, ch.idUser2, ch.idPost, ch.created_at as chat_created_at,
-                       u1.name as name1, u1.username as username1, u1.email as email1, u1.phone as phone1, u1.api_key as api_key1, u1.status as user_status1, u1.created_at as user_created_at1,
-                       u2.name as name2, u2.username as username2, u2.email as email2, u2.phone as phone2, u2.api_key as api_key2, u2.status as user_status2, u2.created_at as user_created_at2
+                       u1.name as name1, u1.username as username1, u1.email as email1, u1.phone as phone1, u1.api_key as api_key1, u1.status as user_status1, u1.created_at as user_created_at1, u1.image_name as user_image_name1,
+                       u2.name as name2, u2.username as username2, u2.email as email2, u2.phone as phone2, u2.api_key as api_key2, u2.status as user_status2, u2.created_at as user_created_at2, u2.image_name as user_image_name2
                        FROM chats AS ch LEFT JOIN users as u1 ON ch.idUser1 = u1.ID LEFT JOIN users as u2 ON ch.idUser2 = u2.ID";
     }
 
@@ -969,10 +970,10 @@ class DbHandler {
                 $tmp["post_id_subcategory"] = $chat['idSubCategory'];
                 $tmp["post_status"] = $chat['post_status'];
                 $tmp["post_hitcount"] = $chat['hitcount'];
-                $tmp["post_city"] = $chat['city'];
-                $tmp["post_country"] = $chat['country'];
                 $tmp["post_sex"] = $chat['sex'];
                 $tmp["post_birth_year"] = $chat['birth_year'];
+                $tmp["post_phone"] = $chat['post_phone'];
+                $tmp["location"] = $chat['location'];
                 $tmp["post_images"] = array();
             }
 
@@ -1213,16 +1214,17 @@ class DbHandler {
             $tmp["id_subcategory"] = $post['idSubCategory'];
             $tmp["post_status"] = $post['post_status'];
             $tmp["hitcount"] = $post['hitcount'];
-            $tmp["city"] = $post['city'];
-            $tmp["country"] = $post['country'];
             $tmp["sex"] = $post['sex'];
             $tmp["birth_year"] = $post['birth_year'];
+            $tmp["phone"] = $post['post_phone'];
+            $tmp["location"] = $post['location'];
             $tmp["user_id"] = $post['user_id'];
             $tmp["user_name"] = $post['name'];
             $tmp["user_username"] = $post['username'];
             $tmp["user_email"] = $post['email'];
             $tmp["user_phone"] = $post['phone'];
             $tmp["user_status"] = $post['user_status'];
+            $tmp["user_image_name"] = $post['user_image_name'];
             $tmp["images"] = array();
 
             array_push($response["posts"], $tmp);
