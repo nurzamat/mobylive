@@ -190,6 +190,24 @@ class DbHandler {
         }
         return $idLocation;
     }
+    public function getIdsRegionLocation($region, $location)
+    {
+        $idRegion = 0;
+        $idLocation = 0;
+        $result = $this->queryMysql("SELECT * FROM regions WHERE name = '$region'");
+        if (mysqli_num_rows($result) > 0)
+        {
+            $r = mysqli_fetch_assoc($result);
+            $idRegion = $r['ID'];
+            $result = $this->queryMysql("SELECT * FROM locations WHERE name = '$location' AND idRegion = '$idRegion'");
+
+            if (mysqli_num_rows($result) > 0) {
+                $r = mysqli_fetch_assoc($result);
+                $idLocation = $r['ID'];
+            }
+        }
+        return $idRegion.";".$idLocation;
+    }
 
     /**
      * Checking for duplicate user by email address
@@ -328,9 +346,12 @@ class DbHandler {
      */
     public function createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $actionType, $sex, $birth_year, $phone, $region, $location)
     {
-        $idLocation = $this->getIdLocation($region, $location);
+        $idsRegionLocation = $this->getIdsRegionLocation($region, $location);
+        $ids = explode(";", $idsRegionLocation);
+        $idRegion = $ids[0];
+        $idLocation = $ids[1];
 
-        $query = "INSERT INTO posts VALUES(NULL, '$title', '$content', '$price', '$price_currency', now(), 0, now(), '$idCategory', '$idSubcategory', '$idSubSubcategory', 0, '$user_id', '$actionType', '$sex', '$birth_year', '$idLocation', '$phone')";
+        $query = "INSERT INTO posts VALUES(NULL, '$title', '$content', '$price', '$price_currency', now(), 0, now(), '$idCategory', '$idSubcategory', '$idSubSubcategory', 0, '$user_id', '$actionType', '$sex', '$birth_year', '$idLocation', '$idRegion', '$phone')";
 
         $result = $this->queryMysql($query);
 
@@ -695,11 +716,61 @@ class DbHandler {
         $params = explode(";", $params);
         $q = $params[0];
         $actionType = $params[1];
+        $region = $params[2];
+        $location = $params[3];
+        $price_from = $params[4];
+        $price_to = $params[5];
+        $sex = $params[6];
+        $age_from = $params[7];
+        $age_to = $params[8];
 
         if($q != "" && $q != "0")
             $res = $res." WHERE p.title LIKE '%$q%'";
         if($actionType != "0")
             $res = $res." AND p.actionType='$actionType'";
+
+        //start region & location
+        if($region != "" && $region != "0" && $location != "" && $location != "0")
+        {
+            $idLocation = $this->getIdLocation($region, $location);
+            if($idLocation != 0)
+                $res = $res." AND p.idLocation='$idLocation'";
+        }
+        elseif($region != "" && $region != "0")
+        {
+            $result = $this->queryMysql("SELECT ID FROM regions WHERE name = '$region'");
+            if (mysqli_num_rows($result) > 0)
+            {
+                $r = mysqli_fetch_assoc($result);
+                $idRegion = $r['ID'];
+                $res = $res." AND p.idRegion='$idRegion'";
+            }
+        }
+        //end region & location
+
+        //price condition
+        if($price_to != "0" && ($price_to > $price_from))
+        {
+            $res = $res." AND (p.price > '$price_from' AND p.price < '$price_to')";
+        }
+        //end price condition
+
+        //sex conditions
+        if($sex == "0" || $sex == "1")
+        {
+            $res = $res." AND p.sex='$sex'";
+        }
+        //end sex condition
+
+        //age condition
+        if($age_from != "0" && $age_to != "0" && $age_to > $age_from)
+        {
+            $birth_to = date("Y") - $age_from;
+            $birth_from = date("Y") - $age_to;
+
+            $res = $res." AND (p.birth_year > '$birth_from' AND p.birth_year < '$birth_to')";
+        }
+        //end age condition
 
         return $res;
     }
