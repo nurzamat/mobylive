@@ -19,7 +19,7 @@ class PassHash {
         //        self::$cost .
         //        '$' . self::unique_salt());
 
-        return hash( 'whirlpool', trim($password));
+        return hash( 'md5', trim($password));
     }
 
     // this will be used to compare a password against a hash

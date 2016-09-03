@@ -309,23 +309,24 @@ $app->post('/posts', 'authenticate', function() use ($app) {
     global $user_id;
     $response = array();
 
-    $req = $app->request();
-    $body = json_decode($req->getBody());
     // reading post params
 
-    $idCategory = $body->idCategory;
-    $idSubcategory = $body->idSubcategory;
+    //$user_id = $app->request->post('user_id');
+    //$api_key = $app->request->post('api_key');
+    $idCategory = $app->request->post('idCategory');
+    $idSubcategory = $app->request->post('idSubcategory');
     $idSubSubcategory = 0;
-    $title = $body->title;
-    $content = $body->content;
-    $price = $body->price;
-    $price_currency = $body->price_currency;
-    $actionType = $body->actionType;
-    $sex = $body->sex;
-    $birth_year = $body->birth_year;
-    $phone = $body->phone;
-    $region = $body->region;
-    $location = $body->location;
+    $title = $app->request->post('title');
+    $content = $app->request->post('content');
+    $price = $app->request->post('price');
+    $price_currency = $app->request->post('price_currency');
+    $actionType = $app->request->post('actionType');
+    $sex = $app->request->post('sex');
+    $birth_year = $app->request->post('birth_year');
+    $phone = $app->request->post('phone');
+    $region = $app->request->post('region');
+    $location = $app->request->post('location');
+
     $db = new DbHandler();
     // creating new task
     $post_id = $db->createPost($user_id, $title, $content, $price, $price_currency, $idCategory, $idSubcategory, $idSubSubcategory, $actionType, $sex, $birth_year, $phone, $region, $location);
