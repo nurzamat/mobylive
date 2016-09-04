@@ -832,7 +832,7 @@ class DbHandler {
             // Now verify the password
             $q = mysqli_fetch_assoc($result);
             $user = array();
-            $user['id'] = $q['ID'];
+            $user['user_id'] = $q['ID'];
             $user["name"] = $q['name'];
             $user["username"] = $q['username'];
             $user["email"] = $q['email'];
@@ -955,23 +955,27 @@ class DbHandler {
     public function addChatMessage($user_id, $chat_id, $message) {
         $response = array();
 
-        $stmt = $this->conn->prepare("INSERT INTO messages (chat_id, user_id, message) values(?, ?, ?)");
-        $stmt->bind_param("iis", $chat_id, $user_id, $message);
+        //start
 
-        if ($result = $stmt->execute()) {
+        $query = "INSERT INTO messages (chat_id, user_id, message) values('$chat_id', '$user_id', '$message')";
+        $result = $this->queryMysql($query);
+
+        if ($result) {
             $response['error'] = false;
 
             // get the message
-            $message_id = $this->conn->insert_id;
-            $stmt = $this->conn->prepare("SELECT user_id, chat_id, message, created_at FROM messages WHERE message_id = '$message_id'");
-            if ($stmt->execute()) {
-                $stmt->bind_result($user_id, $chat_id, $message, $created_at);
-                $stmt->fetch();
+            $message_id = mysqli_insert_id($this->conn);
+
+            $query = "SELECT user_id, chat_id, message, created_at FROM messages WHERE message_id = '$message_id'";
+            $result = $this->queryMysql($query);
+            if ($result)
+            {
+                $res  = mysqli_fetch_assoc($result);
                 $tmp = array();
                 $tmp['message_id'] = $message_id;
-                $tmp['chat_id'] = $chat_id;
-                $tmp['message'] = $message;
-                $tmp['created_at'] = $created_at;
+                $tmp['chat_id'] = $res['chat_id'];
+                $tmp['message'] = $res['message'];
+                $tmp['created_at'] = $res['created_at'];
                 $response['message'] = $tmp;
             }
             else{
@@ -979,10 +983,9 @@ class DbHandler {
             }
         } else {
             $response['error'] = true;
-            $response['message'] = 'Failed send message ' . $stmt->error;
+            $response['message'] = 'Failed send message ';
         }
 
-        $stmt->close();
         return $response;
     }
 

@@ -2,6 +2,8 @@
 
 require_once '../include/DbHandler.php';
 require_once '../include/PassHash.php';
+require_once '../libs/gcm/gcm.php';
+require_once '../libs/gcm/push.php';
 require '../libs/Slim/Slim.php';
 
 \Slim\Slim::registerAutoloader();
@@ -142,7 +144,7 @@ $app->get('/posts', 'authenticate', function() {
     $response["posts"] = array();
 
     // looping through result and preparing posts array
-    while ($post = mysql_fetch_object($result)) {
+    while ($post = mysqli_fetch_object($result)) {
         $tmp = array();
         $tmp["id"] = $post->ID;
         $tmp["title"] = $post->title;
@@ -873,20 +875,17 @@ $app->post('/chat_rooms/:id/message', function($chat_room_id) {
 /**
  * Messaging in a chat 1 to 1
  *  */
-$app->post('/chats/:id/message', function($chat_id) {
-    global $app;
+$app->post('/chats/:id/message', function($chat_id) use($app) {
+    //global $app;
     $db = new DbHandler();
-
-    verifyRequiredParams(array('user_id', 'message'));
 
     $user_id = $app->request->post('user_id');
     $message = $app->request->post('message');
 
     $response = $db->addChatMessage($user_id, $chat_id, $message);
 
+
     if ($response['error'] == false) {
-        require_once '../libs/gcm/gcm.php';
-        require_once '../libs/gcm/push.php';
         $gcm = new GCM();
         $push = new Push();
 
@@ -910,7 +909,8 @@ $app->post('/chats/:id/message', function($chat_id) {
         $response['error'] = false;
     }
 
-    echoRespnse(200, $response);
+    echo json_encode($response);
+    //echoRespnse(200, $response);
 });
 
 
@@ -1234,39 +1234,6 @@ $app->get('/chats/:id/:user_id/:interlocutor_id/:post_id', function($chat_id, $u
     echoRespnse(200, $response);
 });
 
-/**
- * Verifying required params posted or not
- */
-/*
-function verifyRequiredParams($required_fields) {
-    $error = false;
-    $error_fields = "";
-    $request_params = array();
-    $request_params = $_REQUEST;
-    // Handling PUT request params
-    if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
-        $app = \Slim\Slim::getInstance();
-        parse_str($app->request()->getBody(), $request_params);
-    }
-    foreach ($required_fields as $field) {
-        if (!isset($request_params[$field]) || strlen(trim($request_params[$field])) <= 0) {
-            $error = true;
-            $error_fields .= $field . ', ';
-        }
-    }
-
-    if ($error) {
-        // Required field(s) are missing or empty
-        // echo error json and stop the app
-        $response = array();
-        $app = \Slim\Slim::getInstance();
-        $response["error"] = true;
-        $response["message"] = 'Required field(s) ' . substr($error_fields, 0, -2) . ' is missing or empty';
-        echoRespnse(400, $response);
-        $app->stop();
-    }
-}
-*/
 
 function IsNullOrEmptyString($str) {
     return (!isset($str) || trim($str) === '');
