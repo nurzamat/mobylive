@@ -657,6 +657,10 @@ class DbHandler {
     public function updatePost($post_id, $title, $content, $price, $pricecurrency, $idCategory, $idSubcategory, $idSubSubcategory)
     {
         $query = "UPDATE posts SET title = '$title', content = '$content', price = '$price', pricecurrency = '$pricecurrency', idCategory = '$idCategory', idSubcategory = '$idSubcategory', idSubSubcategory = '$idSubSubcategory' WHERE ID = '$post_id'";
+
+        if($idCategory == "0" && $idSubcategory == "0")
+            $query = "UPDATE posts SET title = '$title', content = '$content', price = '$price', pricecurrency = '$pricecurrency' WHERE ID = '$post_id'";
+
         $result = $this->queryMysql($query);
 
         if ($result) {
